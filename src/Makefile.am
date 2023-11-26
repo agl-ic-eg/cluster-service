@@ -12,8 +12,8 @@ cluster_service_SOURCES = \
 # options
 # Additional library
 cluster_service_LDADD = \
-	$(top_srcdir)/lib/libcluster_service_common.a \
-	$(top_srcdir)/lib/libcluster_service_static_configurator.a \
+	$(top_builddir)/lib/libcluster_service_common.a \
+	$(top_builddir)/lib/libcluster_service_static_configurator.a \
 	-lrt -lpthread \
 	@LIBSYSTEMD_LIBS@ 
 

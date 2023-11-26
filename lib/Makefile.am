@@ -8,9 +8,9 @@ libcluster_api_systemd_la_SOURCES = \
 	cluster-api-sdevent.c
 
 libcluster_api_systemd_la_LIBADD = \
-	$(top_srcdir)/lib/libcluster_service_client.a \
-	$(top_srcdir)/lib/libcluster_service_common.a \
-	$(top_srcdir)/lib/libcluster_service_static_configurator.a \
+	$(top_builddir)/lib/libcluster_service_client.a \
+	$(top_builddir)/lib/libcluster_service_common.a \
+	$(top_builddir)/lib/libcluster_service_static_configurator.a \
 	-lrt -lpthread \
 	@LIBSYSTEMD_LIBS@
 
@@ -69,17 +69,5 @@ endif
 if ENABLE_GCOV
 CFLAGS   += -coverage
 endif
-
-#lib_LTLIBRARIES = libexsample.la
-
-#libexsample_la_SOURCES = \
-#		libexsample-c.c 
-#
-#libexsample_la_LBSADD = 
-#
-#libexsample_la_CFLAGS = \
-#		-I$(top_srcdir)/include 
-#
-#libexsample_la_LDFLAGS = 
 
 CLEANFILES = *.gcda *.gcno

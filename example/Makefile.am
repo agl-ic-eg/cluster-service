@@ -10,7 +10,7 @@ cluster_client_SOURCES = \
 # options
 # Additional library
 cluster_client_LDADD = \
-	$(top_srcdir)/lib/libcluster-api-systemd.la \
+	$(top_builddir)/lib/libcluster-api-systemd.la \
 	-lrt -lpthread \
 	@LIBSYSTEMD_LIBS@ 
 
@@ -36,7 +36,6 @@ if ENABLE_GCOV
 CFLAGS   += -coverage
 endif
 
-#
 #if ENABLE_PRINTFDEBUG
 #exsample_CFLAGS   += -D_PRINTF_DEBUG_
 #exsample_CXXFLAGS += -D_PRINTF_DEBUG_
