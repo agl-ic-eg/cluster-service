@@ -8,9 +8,9 @@ libcluster_api_systemd_la_SOURCES = \
 	cluster-api-sdevent.c
 
 libcluster_api_systemd_la_LIBADD = \
-	$(top_builddir)/lib/libcluster_service_client.a \
-	$(top_builddir)/lib/libcluster_service_common.a \
-	$(top_builddir)/lib/libcluster_service_static_configurator.a \
+	libcluster_service_client.a \
+	libcluster_service_common.a \
+	libcluster_service_static_configurator.a \
 	-lrt -lpthread \
 	@LIBSYSTEMD_LIBS@
 
