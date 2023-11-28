@@ -26,38 +26,60 @@ const uint64_t g_demo_data_update_interval = 10 * 1000; // usec
 
 static int g_demo_gear = 0;
 
+#include "demo-data.c"
+
+static int g_table_index = 0;
+static int g_turn = 0;
+
 static void do_demo(void)
 {
+	uint32_t speed_val = g_sim_data_tbl[g_table_index].speed;
+	uint32_t rpm_val = g_sim_data_tbl[g_table_index].rpm;
+	uint32_t gear_val = g_sim_data_tbl[g_table_index].gear;
+	uint32_t turn_val = g_sim_data_tbl[g_table_index].turn;
+
+	g_table_index = g_table_index + 1;
+	if (g_table_index >= (sizeof(g_sim_data_tbl)/sizeof(g_sim_data_tbl[0]))) {
+		g_table_index = 0;
+		g_turn = (g_turn + 1) % 2;
+	}
+
+	data_pool_set_speed_analog_val(speed_val);
+	data_pool_set_tacho_analog_val(rpm_val);
+	if (gear_val == 0) {
+		data_pool_set_gear_at_val(IC_HMI_AT_OFF);
+	} else if (gear_val == 1) {
+		data_pool_set_gear_at_val(IC_HMI_AT_PARKING);
+	} else if (gear_val == 2) {
+		data_pool_set_gear_at_val(IC_HMI_AT_REVERSE);
+	} else if (gear_val == 3) {
+		data_pool_set_gear_at_val(IC_HMI_AT_NEUTRAL);
+	} else if (gear_val == 4) {
+		data_pool_set_gear_at_val(IC_HMI_AT_DRIVE);
+	} else if (gear_val == 5) {
+		data_pool_set_gear_at_val(IC_HMI_AT_BRAKE);
+	}
+
+
+	if (g_turn == 0) {
+		if (turn_val == 1)
+			data_pool_set_turn_r(IC_HMI_ON);
+		else
+			data_pool_set_turn_r(IC_HMI_OFF);
+
+		data_pool_set_turn_l(IC_HMI_OFF);
+	} else {
+		if (turn_val == 1)
+			data_pool_set_turn_l(IC_HMI_ON);
+		else
+			data_pool_set_turn_l(IC_HMI_OFF);
+
+		data_pool_set_turn_r(IC_HMI_OFF);
+	}
+
 	// trip
 	{
 		data_pool_set_trcom_trip_a_val(data_pool_get_trcom_trip_a_val() + 1);
-	}
-
-	// speed
-	{
-		if ((g_demo_timer.demo_count % 500) < 400) {
-			if (((g_demo_timer.demo_count / 500) % 2) == 0) {
-				data_pool_set_speed_analog_val(data_pool_get_speed_analog_val() + 50);
-			} else {
-				data_pool_set_speed_analog_val(data_pool_get_speed_analog_val() - 50);
-			}
-		}
-	}
-
-	// tacho
-	{
-		if (data_pool_get_tacho_analog_val() < 1000)
-			data_pool_set_tacho_analog_val(1000);
-
-		if ((g_demo_timer.demo_count % 500) < 100) {
-			if (((g_demo_timer.demo_count / 500) % 2) == 0) {
-				uint32_t tacho_val = (g_demo_timer.demo_count % 500) * 70 + 1000;
-				data_pool_set_tacho_analog_val(tacho_val);
-			} else {
-				uint32_t tacho_val = (100 - (g_demo_timer.demo_count % 500)) * 70 + 1000;
-				data_pool_set_tacho_analog_val(tacho_val);
-			}
-		}
 	}
 
 	// temp
@@ -76,41 +98,10 @@ static void do_demo(void)
 		}
 	}
 
-	// Gear
-	{
-		if (((g_demo_timer.demo_count / 300) % 4) == 1) {
-			if ((g_demo_timer.demo_count % 300) == 0) {
-
-				if (g_demo_gear == 0) {
-					data_pool_set_gear_at_val(IC_HMI_AT_OFF);
-				} else if (g_demo_gear == 1) {
-					data_pool_set_gear_at_val(IC_HMI_AT_PARKING);
-				} else if (g_demo_gear == 2) {
-					data_pool_set_gear_at_val(IC_HMI_AT_REVERSE);
-				} else if (g_demo_gear == 3) {
-					data_pool_set_gear_at_val(IC_HMI_AT_NEUTRAL);
-				} else if (g_demo_gear == 4) {
-					data_pool_set_gear_at_val(IC_HMI_AT_DRIVE);
-				} else if (g_demo_gear == 5) {
-					data_pool_set_gear_at_val(IC_HMI_AT_BRAKE);
-				}
-
-				g_demo_gear = (g_demo_gear + 1) % 6;
-			}
-		}
-	}
-
 	// Telltale
 	{
 		if (((g_demo_timer.demo_count / 300) % 4) == 1) {
 			if ((g_demo_timer.demo_count % 30) == 1) {
-
-				if (data_pool_get_turn_r() == IC_HMI_ON)
-					data_pool_set_turn_r(IC_HMI_OFF);
-				else
-					data_pool_set_turn_r(IC_HMI_ON);
-
-
 				if (data_pool_get_front_right_seatbelt() == IC_HMI_ON)
 					data_pool_set_front_right_seatbelt(IC_HMI_OFF);
 				else 
@@ -120,16 +111,6 @@ static void do_demo(void)
 					data_pool_set_front_left_seatbelt(IC_HMI_OFF);
 				else
 					data_pool_set_front_left_seatbelt(IC_HMI_ON);
-			}
-		}
-
-		if (((g_demo_timer.demo_count / 300) % 4) == 3) {
-			if ((g_demo_timer.demo_count % 30) == 1) {
-
-				if (data_pool_get_turn_l() == IC_HMI_ON)
-					data_pool_set_turn_l(IC_HMI_OFF);
-				else
-					data_pool_set_turn_l(IC_HMI_ON);
 			}
 		}
 

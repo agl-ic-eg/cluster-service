@@ -10,6 +10,13 @@
 #include <stdint.h>
 #include <systemd/sd-event.h>
 
+typedef struct s_sim_data_table {
+	uint32_t speed;
+	uint32_t rpm;
+	uint32_t gear;
+	uint32_t turn;
+} sim_data_table_t;
+
 int demo_data_generator_setup(sd_event *event);
 int demo_data_generator_cleanup(void);
 
