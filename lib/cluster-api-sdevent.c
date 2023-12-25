@@ -45,11 +45,8 @@ typedef struct s_data_pool_client_sdevent *data_pool_client_handle_sdevent;
  */
 static int data_pool_sessions_handler(sd_event_source *event, int fd, uint32_t revents, void *userdata)
 {
-	sd_event_source *socket_source = NULL;
 	data_pool_client_handle_sdevent dp = (data_pool_client_handle_sdevent) userdata;
-	int sessionfd = -1;
 	int ret = -1;
-	ssize_t sret = -1;
 
 	if ((revents & (EPOLLHUP | EPOLLERR)) != 0) {
 		// Disconnect session
