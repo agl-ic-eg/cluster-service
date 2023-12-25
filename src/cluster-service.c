@@ -10,6 +10,8 @@
 
 #include "demo-data-generator.h"
 
+#include "alarm-sound.h"
+
 #include <stdlib.h>
 #include <systemd/sd-daemon.h>
 #include <systemd/sd-event.h>
@@ -20,6 +22,7 @@ int main(int argc, char *argv[])
 {
 	sd_event *event = NULL;
 	data_pool_service_handle handle = NULL;
+	alarm_sound_worker_t *worker;
 	int ret = -1;
 
 	ret = sd_event_default(&event);
