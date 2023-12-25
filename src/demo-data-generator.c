@@ -7,6 +7,7 @@
 
 #include "demo-data-generator.h"
 #include "data-pool.h"
+#include "alarm-sound.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -18,6 +19,8 @@ struct s_demo_data_timer {
 	sd_event_source *timer_evsource; /**< Timer event source */
 	uint64_t timerval;		 /**< Timer counter */
 	uint64_t demo_count;		 /** demo event counter */
+
+	alarm_sound_worker_t *worker;
 };
 
 static struct s_demo_data_timer g_demo_timer;
@@ -100,6 +103,8 @@ static void do_demo(void)
 
 	// Telltale
 	{
+		int tel_on = 0;
+	
 		if (((g_demo_timer.demo_count / 300) % 4) == 1) {
 			if ((g_demo_timer.demo_count % 30) == 1) {
 				if (data_pool_get_front_right_seatbelt() == IC_HMI_ON)
@@ -123,6 +128,8 @@ static void do_demo(void)
 			data_pool_set_rear_left_door(IC_HMI_ON);
 			data_pool_set_trunk_door(IC_HMI_ON);
 			data_pool_set_hood_door(IC_HMI_ON);
+			(void) set_command_alarm_sound_worker(g_demo_timer.worker, ALARM_SOUND_WORKER_PLAY2);
+			tel_on = 1;
 		} else {
 			data_pool_set_brake(IC_HMI_OFF);
 			data_pool_set_door(IC_HMI_OFF);
@@ -143,6 +150,8 @@ static void do_demo(void)
 			data_pool_set_engine(IC_HMI_ON);
 			data_pool_set_fuel(IC_HMI_ON);
 			data_pool_set_immobi(IC_HMI_ON);
+			(void) set_command_alarm_sound_worker(g_demo_timer.worker, ALARM_SOUND_WORKER_PLAY1);
+			tel_on = 1;
 		} else {
 			data_pool_set_eps(IC_HMI_OFF);
 			data_pool_set_srs_airbag(IC_HMI_OFF);
@@ -188,6 +197,9 @@ static void do_demo(void)
 			data_pool_set_hot_temp(IC_HMI_ON);
 			data_pool_set_low_temp(IC_HMI_ON);
 
+			(void) set_command_alarm_sound_worker(g_demo_timer.worker, ALARM_SOUND_WORKER_PLAY0);
+			tel_on = 1;
+
 			if (((g_demo_timer.demo_count / 250) % 5) == 0)
 				data_pool_set_high_beam(IC_HMI_ON);
 			else
@@ -207,6 +219,10 @@ static void do_demo(void)
 			data_pool_set_driving_power_mode(IC_HMI_OFF);
 			data_pool_set_hot_temp(IC_HMI_OFF);
 			data_pool_set_low_temp(IC_HMI_OFF);
+		}
+
+		if (tel_on == 0) {
+			(void) set_command_alarm_sound_worker(g_demo_timer.worker, ALARM_SOUND_WORKER_STOP);
 		}
 	}
 
@@ -280,6 +296,8 @@ int demo_data_generator_setup(sd_event *event)
 		ret = -1;
 		goto err_return;
 	}
+
+	(void) create_alarm_sound_worker(&g_demo_timer.worker);
 
 	return 0;
 
