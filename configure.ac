@@ -51,6 +51,7 @@ AM_PROG_LIBTOOL
 
 PKG_PROG_PKG_CONFIG
 PKG_CHECK_MODULES([LIBSYSTEMD], [libsystemd])
+PKG_CHECK_MODULES([LIBALSA], [alsa])
 PKG_CHECK_MODULES([GTEST_MAIN], [gtest_main], , enable_test=no)
 PKG_CHECK_MODULES([GMOCK_MAIN], [gmock_main], , enable_test=no)
 

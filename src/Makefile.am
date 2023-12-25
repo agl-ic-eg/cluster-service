@@ -1,9 +1,11 @@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 
-bin_PROGRAMS = cluster_service 
+bin_PROGRAMS = cluster_service
 
 cluster_service_SOURCES = \
+	incbin.c \
+	alarm-sound.c \
 	data-pool-service.c \
 	cluster-service-util.c \
 	cluster-service.c \
@@ -15,7 +17,8 @@ cluster_service_LDADD = \
 	$(top_builddir)/lib/libcluster_service_common.a \
 	$(top_builddir)/lib/libcluster_service_static_configurator.a \
 	-lrt -lpthread \
-	@LIBSYSTEMD_LIBS@ 
+	@LIBSYSTEMD_LIBS@ \
+	@LIBALSA_LIBS@
 
 # C compiler options
 cluster_service_CFLAGS = \
@@ -23,11 +26,11 @@ cluster_service_CFLAGS = \
 	-I$(top_srcdir)/lib \
 	-I$(top_srcdir)/include \
 	@LIBSYSTEMD_CFLAGS@ \
+	@LIBALSA_CFLAGS@ \
 	-D_GNU_SOURCE
 
-# Linker options
+# Linker optionscluster_service
 cluster_service_LDFLAGS = 
-
 
 # configure option 
 if ENABLE_ADDRESS_SANITIZER
