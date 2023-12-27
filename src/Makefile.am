@@ -19,8 +19,7 @@ cluster_service_LDADD = \
 	$(top_builddir)/lib/libcluster_service_static_configurator.a \
 	-lrt -lpthread \
 	@LIBSYSTEMD_LIBS@ \
-	@LIBALSA_LIBS@ \
-	@LIBSOCKETCAN_LIBS@
+	@LIBALSA_LIBS@
 
 # C compiler options
 cluster_service_CFLAGS = \
@@ -29,7 +28,6 @@ cluster_service_CFLAGS = \
 	-I$(top_srcdir)/include \
 	@LIBSYSTEMD_CFLAGS@ \
 	@LIBALSA_CFLAGS@ \
-	@LIBSOCKETCAN_CFLAGS@ \
 	-D_GNU_SOURCE
 
 # Linker optionscluster_service
