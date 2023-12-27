@@ -6,6 +6,7 @@ bin_PROGRAMS = cluster_service
 cluster_service_SOURCES = \
 	incbin.c \
 	alarm-sound.c \
+	socketcan-receiver.c \
 	data-pool-service.c \
 	cluster-service-util.c \
 	cluster-service.c \
