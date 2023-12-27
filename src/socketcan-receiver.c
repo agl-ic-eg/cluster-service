@@ -137,7 +137,7 @@ static int socketcan_sessions_handler(sd_event_source *event, int fd, uint32_t r
 	return ret;
 }
 
-static const char socket_can_interface[] = "vcan0";
+static const char socket_can_interface[] = "vxcan0";
 
 /**
  * Function for data pool passenger setup
