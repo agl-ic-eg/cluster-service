@@ -11,6 +11,7 @@
 #include "demo-data-generator.h"
 
 #include "alarm-sound.h"
+#include "socketcan-receiver.h"
 
 #include <stdlib.h>
 #include <systemd/sd-daemon.h>
@@ -22,6 +23,7 @@ int main(int argc, char *argv[])
 {
 	sd_event *event = NULL;
 	data_pool_service_handle handle = NULL;
+	socketcan_client_handle_sdevent can_handle = NULL;
 	alarm_sound_worker_t *worker;
 	int ret = -1;
 
@@ -39,6 +41,7 @@ int main(int argc, char *argv[])
 		goto finish;
 
 	(void) demo_data_generator_setup(event);
+	(void) socketcan_client_setup_sdevent(event, &can_handle);
 
 	ret = data_pool_service_setup(event, &handle);
 
@@ -50,6 +53,7 @@ int main(int argc, char *argv[])
 
 finish:
 	(void) data_pool_service_cleanup(handle);
+	(void) socketcan_client_cleanup_sdevent(can_handle);
 	(void) demo_data_generator_cleanup();
 	event = sd_event_unref(event);
 
