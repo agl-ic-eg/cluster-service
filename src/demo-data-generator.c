@@ -19,8 +19,6 @@ struct s_demo_data_timer {
 	sd_event_source *timer_evsource; /**< Timer event source */
 	uint64_t timerval;		 /**< Timer counter */
 	uint64_t demo_count;		 /** demo event counter */
-
-	alarm_sound_worker_t *worker;
 };
 
 static struct s_demo_data_timer g_demo_timer;
@@ -102,6 +100,7 @@ static void do_demo(void)
 	}
 
 	// Telltale
+	/*
 	{
 		int tel_on = 0;
 	
@@ -225,6 +224,7 @@ static void do_demo(void)
 			(void) set_command_alarm_sound_worker(g_demo_timer.worker, ALARM_SOUND_WORKER_STOP);
 		}
 	}
+	*/
 
 	g_demo_timer.demo_count++;
 }
@@ -296,8 +296,6 @@ int demo_data_generator_setup(sd_event *event)
 		ret = -1;
 		goto err_return;
 	}
-
-	(void) create_alarm_sound_worker(&g_demo_timer.worker);
 
 	return 0;
 

@@ -46,6 +46,9 @@ int create_alarm_sound_worker(alarm_sound_worker_t **worker)
 
 int set_command_alarm_sound_worker(alarm_sound_worker_t *worker, int command)
 {
+	if (worker == NULL)
+		return -1;
+
 	worker->command = command;
 
 	return 0;
@@ -54,6 +57,9 @@ int set_command_alarm_sound_worker(alarm_sound_worker_t *worker, int command)
 
 int release_alarm_sound_worker(alarm_sound_worker_t *worker)
 {
+	if (worker == NULL)
+		return -1;
+
 	worker->command = ALARM_SOUND_WORKER_END;
 
 	return 0;
