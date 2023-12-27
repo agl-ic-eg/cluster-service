@@ -45,7 +45,14 @@ int main(int argc, char *argv[])
 	if (ret < 0)
 		goto finish;
 
-	retry = 200;
+	ret = data_pool_service_setup(event, &handle);
+
+	(void) sd_notify(
+		1,
+		"READY=1\n"
+		"STATUS=Daemon startup completed, processing events.");
+
+	retry = 500;
 	do {
 		struct timespec wait_time = {.tv_sec = 0, .tv_nsec = 10 * 1000 * 1000};
 
@@ -58,12 +65,6 @@ int main(int argc, char *argv[])
 		retry--;
 	} while (retry >= 0);
 
-	ret = data_pool_service_setup(event, &handle);
-
-	(void) sd_notify(
-		1,
-		"READY=1\n"
-		"STATUS=Daemon startup completed, processing events.");
 	ret = sd_event_loop(event);
 
 finish:
