@@ -25,6 +25,6 @@
     extern                              const char incbin_ ## name ## _end[]
 #endif	//#ifndef INCBIN_BODY
 
-INCBIN(alarm0, "sound/alarm0.raw");
-INCBIN(alarm1, "sound/alarm1.raw");
+INCBIN(alarm0, "sound/alarm3.raw");
+INCBIN(alarm1, "sound/alarm4.raw");
 INCBIN(alarm2, "sound/alarm2.raw");
