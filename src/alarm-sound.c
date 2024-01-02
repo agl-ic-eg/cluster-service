@@ -20,12 +20,11 @@ int create_alarm_sound_worker(alarm_sound_worker_t **worker)
 	int ret = -1;
 
 	g_alarm_sound_table[0].data_top = (unsigned char*)&incbin_alarm0_start[0];
-	g_alarm_sound_table[0].samples = (size_t)(&incbin_alarm0_end[0] - &incbin_alarm0_start[0])/4,		
-	g_alarm_sound_table[1].data_top = (unsigned char*)&incbin_alarm1_start[0],
-	g_alarm_sound_table[1].samples = (size_t)(&incbin_alarm1_end[0] - &incbin_alarm1_start[0])/4,		
-	g_alarm_sound_table[2].data_top = (unsigned char*)&incbin_alarm2_start[2],
-	g_alarm_sound_table[2].samples = (size_t)(&incbin_alarm2_end[0] - &incbin_alarm2_start[0])/4,		
-
+	g_alarm_sound_table[0].samples = (size_t)(&incbin_alarm0_end[0] - &incbin_alarm0_start[0])/4;
+	g_alarm_sound_table[1].data_top = (unsigned char*)&incbin_alarm1_start[0];
+	g_alarm_sound_table[1].samples = (size_t)(&incbin_alarm1_end[0] - &incbin_alarm1_start[0])/4;
+	g_alarm_sound_table[2].data_top = (unsigned char*)&incbin_alarm2_start[2];
+	g_alarm_sound_table[2].samples = (size_t)(&incbin_alarm2_end[0] - &incbin_alarm2_start[0])/4;
 
 	p = (alarm_sound_worker_t*)malloc(sizeof(alarm_sound_worker_t));
 	if (p == NULL) {
@@ -69,7 +68,7 @@ int release_alarm_sound_worker(alarm_sound_worker_t *worker)
 
 static char *device = "default";			/* playback device */
 
-static __attribute__((aligned(16))) short g_dummy_buffer[2*48000/2] = {0};
+static __attribute__((aligned(16))) short g_dummy_buffer[2*48000/2/10] = {0};	//100ms silent buffer
 
 static void *alarm_sound_worker_thread(void* arg)
 {
@@ -127,8 +126,6 @@ static void *alarm_sound_worker_thread(void* arg)
 				fprintf(stderr, "Short write (expected %li, wrote %li)\n", g_alarm_sound_table[index].samples, frames);
 			}
 		} else {
-			//struct timespec wait_time = {.tv_sec = 0, .tv_nsec = 10 * 1000 * 1000};
-		    //(void)clock_nanosleep(CLOCK_MONOTONIC, 0, &wait_time, NULL);
 			frames = snd_pcm_writei(handle, &g_dummy_buffer[0], sizeof(g_dummy_buffer)/4 );
 			if (frames < 0)
 				frames = snd_pcm_recover(handle, frames, 0);
