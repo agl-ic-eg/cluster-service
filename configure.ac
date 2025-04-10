@@ -12,6 +12,17 @@ AC_CONFIG_HEADERS([include/config.h])
 
 AC_CONFIG_MACRO_DIR([m4])
 
+AC_ARG_ENABLE([fake-data-source],
+  [AS_HELP_STRING([--enable-fake-data-source], [Enable fake data source (default is no)])],
+  [:],
+  [enable_fake_data_source=no])
+AM_CONDITIONAL([DATA_SOURCE_FAKE], [test "$enable_fake_data_source" = "yes"])
+
+AC_ARG_ENABLE([socketcan-data-source],
+  [AS_HELP_STRING([--enable-socketcan-data-source], [Enable socketcan data source (default is no)])],
+  [:],
+  [enable_socketcan_data_source=no])
+AM_CONDITIONAL([DATA_SOURCE_SOCKET_CAN], [test "$enable_socketcan_data_source" = "yes"])
 
 AC_ARG_ENABLE([address-sanitizer],
   [AS_HELP_STRING([--enable-address-sanitizer], [Enable address sanitizer in build time (for debug, default is no)])],
@@ -30,7 +41,6 @@ AC_ARG_ENABLE([test],
   [:],
   [enable_test=no])
 AM_CONDITIONAL([ENABLE_TEST], [test "$enable_test" = "yes"])
-
 
 AC_ARG_ENABLE([printfdebug],
   [AS_HELP_STRING([--enable-printfdebug], [Enable user printf debug (default is no)])],
@@ -64,10 +74,12 @@ PKG_CHECK_MODULES([GMOCK_MAIN], [gmock_main], , enable_test=no)
 # Checks for library functions.
 
 AC_CONFIG_FILES([Makefile
-                cluster_api.pc
-                cluster-api-systemd.pc
+				cluster_api.pc
+				cluster-api-systemd.pc
 				lib/Makefile
 				src/Makefile
+				src/source/fake-data/Makefile
+				src/source/socket-can/Makefile
 				example/Makefile
 				test/Makefile ])
 AC_OUTPUT
