@@ -7,7 +7,7 @@
 
 #include "demo-data-generator.h"
 #include "data-pool.h"
-#include "alarm-sound.h"
+//#include "alarm-sound.h"
 
 #include <errno.h>
 #include <stdio.h>

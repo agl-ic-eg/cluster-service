@@ -4,13 +4,12 @@ ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 bin_PROGRAMS = cluster_service
 
 cluster_service_SOURCES = \
+	source/data-source.c \
 	incbin.c \
 	alarm-sound.c \
-	socketcan-receiver.c \
 	data-pool-service.c \
 	cluster-service-util.c \
-	cluster-service.c \
-	demo-data-generator.c
+	cluster-service.c
 
 # options
 # Additional library
@@ -42,11 +41,16 @@ if ENABLE_GCOV
 CFLAGS   += -coverage
 endif
 
-
-#
-#if ENABLE_PRINTFDEBUG
-#exsample_CFLAGS   += -D_PRINTF_DEBUG_
-#exsample_CXXFLAGS += -D_PRINTF_DEBUG_
-#endif
-
 CLEANFILES = *.gcda *.gcno
+
+if DATA_SOURCE_FAKE
+SUBDIRS = source/fake-data
+CFLAGS += -DDATA_SOURCE_FAKE
+cluster_service_LDADD += source/fake-data/libsource_fake_data.a
+endif
+
+if DATA_SOURCE_SOCKET_CAN
+SUBDIRS = source/socket-can
+CFLAGS += -DDATA_SOURCE_SOCKET_CAN
+cluster_service_LDADD += source/socket-can/libsource_socketcan.a
+endif

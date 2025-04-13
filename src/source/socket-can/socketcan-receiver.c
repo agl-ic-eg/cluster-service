@@ -6,8 +6,9 @@
  */
 
 #include "data-pool.h"
-#include "alarm-sound.h"
+#include "../../alarm-sound.h"
 #include "socketcan-receiver.h"
+#include "socketcan-data.h"
 
 #include <errno.h>
 #include <stdlib.h>
@@ -29,11 +30,26 @@ struct s_socketcan_client_sdevent {
 	sd_event_source *socket_evsource; /**< UNIX Domain socket event source for data pool service */
 	alarm_sound_worker_t *alarm_sound;
 };
-typedef struct s_socketcan_client_sdevent *socketcan__client_handle_sdevent;
+typedef struct s_socketcan_client_sdevent *socketcan_client_handle_sdevent;
 
 
 static void do_can(struct can_frame *can_frame_data, socketcan_client_handle_sdevent scp)
 {
+	size_t element_num = 0;
+
+	element_num = socketcan_data_get_element_num();
+
+	for (size_t i=0; i < element_num; i++) {
+		socketcan_data_handling_t *operation = socketcan_data_get_table(i);
+		if (operation != NULL) {
+			if (operation->can_id == (uint32_t)can_frame_data->can_id) {
+				operation->handler((uint32_t)can_frame_data->can_id,
+				can_frame_data->data,
+				(size_t)can_frame_data->can_dlc);
+			}
+		}
+	}
+/*
 	int telltale_on = 0;
 
 	switch(can_frame_data->can_id) {
@@ -84,9 +100,10 @@ static void do_can(struct can_frame *can_frame_data, socketcan_client_handle_sde
 		(void) set_command_alarm_sound_worker(scp->alarm_sound, ALARM_SOUND_WORKER_STOP);
 	}
 
-	//fprintf(stderr, "ret = %ld 0x%03X [%d] \n",ret, can_frame_data.can_id, can_frame_data.can_dlc);
+	fprintf(stderr, "0x%03X [%d] \n", can_frame_data->can_id, can_frame_data->can_dlc);
 
 	return;
+*/
 }
 
 
@@ -137,7 +154,7 @@ static int socketcan_sessions_handler(sd_event_source *event, int fd, uint32_t r
 	return ret;
 }
 
-static const char socket_can_interface[] = "vxcan0";
+static const char socket_can_interface[] = "can0";
 
 /**
  * Function for data pool passenger setup
@@ -173,7 +190,7 @@ int socketcan_client_setup_sdevent(sd_event *event, socketcan_client_handle_sdev
 	scp->parent_eventloop = event;
 
 	// Create client socket
-	fd = socket(PF_CAN, SOCK_RAW | SOCK_NONBLOCK, CAN_RAW);
+	fd = socket(PF_CAN, (SOCK_RAW | SOCK_NONBLOCK), CAN_RAW);
 	if (fd < 0) {
 		result = -1;
 		goto err_return;
@@ -204,14 +221,14 @@ int socketcan_client_setup_sdevent(sd_event *event, socketcan_client_handle_sdev
 		goto err_return;
 	}
 
-	// Set automatically fd closen at delete object.
+	// Set automatically fd close at delete object.
 	ret = sd_event_source_set_io_fd_own(socket_source, 1);
 	if (ret < 0) {
 		result = -1;
 		goto err_return;
 	}
 
-	// After the automaticall fd close settig shall not close fd in error path
+	// After the automaticall fd close setting shall not close fd in error path
 	fd = -1;
 
 	scp->socket_evsource = socket_source;
