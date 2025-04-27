@@ -28,7 +28,6 @@
 struct s_socketcan_client_sdevent {
 	sd_event *parent_eventloop;	  /**< UNIX Domain socket event source for data pool service */
 	sd_event_source *socket_evsource; /**< UNIX Domain socket event source for data pool service */
-	alarm_sound_worker_t *alarm_sound;
 };
 typedef struct s_socketcan_client_sdevent *socketcan_client_handle_sdevent;
 
@@ -154,8 +153,6 @@ static int socketcan_sessions_handler(sd_event_source *event, int fd, uint32_t r
 	return ret;
 }
 
-static const char socket_can_interface[] = "can0";
-
 /**
  * Function for data pool passenger setup
  *
@@ -165,7 +162,7 @@ static const char socket_can_interface[] = "can0";
  *				-1 internal error
  *				-2 argument error
  */
-int socketcan_client_setup_sdevent(sd_event *event, socketcan_client_handle_sdevent *handle)
+int socketcan_client_setup_sdevent(sd_event *event, socketcan_client_handle_sdevent *handle, const char *canif)
 {
 	sd_event_source *socket_source = NULL;
 	struct sockaddr_can can_addr;
@@ -176,8 +173,9 @@ int socketcan_client_setup_sdevent(sd_event *event, socketcan_client_handle_sdev
 	int ret = -1;
 	int result = -1;
 
-	if (event == NULL || handle == NULL)
+	if ((event == NULL) || (handle == NULL) || (canif == NULL)) {
 		return -2;
+	}
 
 	scp = (struct s_socketcan_client_sdevent *) malloc(sizeof(struct s_socketcan_client_sdevent));
 	if (scp == NULL) {
@@ -197,7 +195,7 @@ int socketcan_client_setup_sdevent(sd_event *event, socketcan_client_handle_sdev
 	}
 
 	memset(&can_ifr, 0, sizeof(can_ifr));
-	(void) strncpy(can_ifr.ifr_name, socket_can_interface, sizeof(can_ifr.ifr_name));
+	(void) strncpy(can_ifr.ifr_name, canif, sizeof(can_ifr.ifr_name));
 	ret = ioctl(fd, SIOCGIFINDEX, &can_ifr);
 	if (ret < 0) {
 		result = -1;
@@ -233,21 +231,11 @@ int socketcan_client_setup_sdevent(sd_event *event, socketcan_client_handle_sdev
 
 	scp->socket_evsource = socket_source;
 
-	ret = create_alarm_sound_worker(&scp->alarm_sound);
-	if (ret < 0) {
-		result = -1;
-		goto err_return;
-	}
-
 	(*handle) = scp;
 
 	return 0;
 
 err_return:
-	if (scp->alarm_sound != NULL) {
-		(void) release_alarm_sound_worker(scp->alarm_sound);
-	}
-
 	socket_source = sd_event_source_disable_unref(socket_source);
 	free(scp);
 	if (fd != -1)
@@ -269,10 +257,6 @@ int socketcan_client_cleanup_sdevent(socketcan_client_handle_sdevent handle)
 	// NULL through
 	if (handle == NULL)
 		return 0;
-
-	if (scp->alarm_sound != NULL) {
-		(void) release_alarm_sound_worker(scp->alarm_sound);
-	}
 
 	(void) sd_event_source_disable_unref(scp->socket_evsource);
 
