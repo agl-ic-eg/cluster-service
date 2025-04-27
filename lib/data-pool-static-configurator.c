@@ -18,9 +18,11 @@
 #include <stdio.h>
 
 
-/** data pool service static configurator. It shall be set statically bosth service and client library.*/
+/** data pool service static configurator. It shall be set statically both service and client library.*/
 struct s_data_pool_service_configure {
-	uint64_t notification_interval; /**< Parametor for data pool notification interval */
+	uint64_t notification_interval; /**< Parameter for data pool notification interval */
+	uint64_t fixed_interval_smoothing_sp_analog_val; /**< Parameter for fixed-interval smoothing for speed value */
+	uint64_t fixed_interval_smoothing_ta_analog_val; /**< Parameter for fixed-interval smoothing for tacho value */
 
 	int32_t data_pool_service_session_limit; /**< Parametor for internal limitation for datapool service
 						    sessions. It use link list search limit. */
@@ -31,6 +33,8 @@ typedef struct s_data_pool_service_configure data_pool_service_staticconfig;
 
 static const struct s_data_pool_service_configure g_config = {
 	.notification_interval = (16 * 1000),	  // usec
+	.fixed_interval_smoothing_sp_analog_val = (1000 * 1000),	  // 1sec
+	.fixed_interval_smoothing_ta_analog_val = (1000 * 1000),	  // 1sec
 	.data_pool_service_session_limit = (100), // counts
 
 	.socket_name = "\0/agl/agl-cluster-service",
@@ -44,6 +48,26 @@ static const struct s_data_pool_service_configure g_config = {
 uint64_t get_data_pool_notification_interval(void)
 {
 	return g_config.notification_interval;
+}
+
+/**
+ * Getter for the data pool fixed-interval smoothing for speed value.
+ *
+ * @return uint64_t	 Interval smoothing time for speed value.
+ */
+uint64_t get_data_pool_fixed_interval_smoothing_sp_analog_val(void)
+{
+	return g_config.fixed_interval_smoothing_sp_analog_val;
+}
+
+/**
+ * Getter for the data pool fixed-interval smoothing for tacho value.
+ *
+ * @return uint64_t	 Interval smoothing time for tacho value.
+ */
+uint64_t get_data_pool_fixed_interval_smoothing_ta_analog_val(void)
+{
+	return g_config.fixed_interval_smoothing_ta_analog_val;
 }
 
 /**

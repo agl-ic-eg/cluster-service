@@ -32,6 +32,13 @@ struct s_data_pool_notification_timer {
 	uint64_t timerval;		 /**< Timer counter */
 };
 
+/** data barrel for smoothing in case of uint32_t data type */
+struct s_smoothing_barrel_uint32 {
+	uint32_t *barrel;
+	size_t barrel_num;
+	size_t barrel_wp;
+};
+
 /** data pool service handles */
 struct s_data_pool_service {
 	sd_event *parent_eventloop;	  /**< UNIX Domain socket event source for data pool service */
@@ -39,10 +46,39 @@ struct s_data_pool_service {
 	struct s_data_pool_notification_timer
 		*notification_timer;		  /**< Notification timer for data pool service  */
 	struct s_data_pool_session *session_list; /**< Data pool client sessions list */
+	struct s_smoothing_barrel_uint32 speed_barrel;	/**< Smoothing data barrel for speed value */
+	struct s_smoothing_barrel_uint32 tacho_barrel;	/**< Smoothing data barrel for tacho value */
 };
 typedef struct s_data_pool_service *data_pool_service_handle;
 
-static AGLCLUSTER_SERVICE_PACKET g_packet;
+struct S_AGLCLUSTER_SERVICE_PACKETHEADER_V1 g_packet_header;
+
+/**
+ * Push latest data and pop smoothing data for uint32_t barrel
+ *
+ * @param [in]	pbarrel		pointer to barrel for operation target
+ * @param [in]	pbarrel		latest value for barrel data
+ * @return int	smoothing value
+ */
+static uint32_t smoothing_barrel_operation_uint32(struct s_smoothing_barrel_uint32 *pbarrel, uint32_t push_value)
+{
+	uint32_t result = 0U;
+
+	if (pbarrel != NULL) {
+		uint64_t tmp = 0UL;
+
+		pbarrel->barrel_wp = (pbarrel->barrel_wp + 1U) % pbarrel->barrel_num;
+		pbarrel->barrel[pbarrel->barrel_wp] = push_value;
+
+		for(size_t i=0; i < pbarrel->barrel_num;i++) {
+			tmp = tmp + (uint64_t)pbarrel->barrel[i];
+		}
+
+		result = (uint32_t)(tmp / pbarrel->barrel_num);
+	}
+
+	return result;
+}
 
 /**
  * Data pool message passenger
@@ -54,6 +90,7 @@ static AGLCLUSTER_SERVICE_PACKET g_packet;
  */
 static int data_pool_message_passanger(data_pool_service_handle dp)
 {
+	static AGLCLUSTER_SERVICE_PACKET service_packet;
 	struct s_data_pool_session *listp = NULL;
 	int fd = -1;
 	ssize_t ret = -1;
@@ -62,20 +99,27 @@ static int data_pool_message_passanger(data_pool_service_handle dp)
 	if (dp == NULL)
 		return -2;
 
-	g_packet.header.seqnum++;
-	ret = data_pool_get_v1(&g_packet.data);
+	g_packet_header.seqnum++;
+	ret = data_pool_get_v1(&service_packet.data);
 	if (ret < 0)
 		goto out;
 
-	result = 0;
+	//get smoothing value
+	service_packet.data.spAnalogVal = smoothing_barrel_operation_uint32(&dp->speed_barrel, service_packet.data.spAnalogVal);
+	service_packet.data.taAnalogVal = smoothing_barrel_operation_uint32(&dp->tacho_barrel, service_packet.data.taAnalogVal);
+	service_packet.header.magic = g_packet_header.magic;
+	service_packet.header.version = g_packet_header.version;
+	service_packet.header.seqnum = g_packet_header.seqnum;
 
+	//fprintf(stderr,"speed %8.0d\r", service_packet.data.spAnalogVal);
+	result = 0;
 
 	if (dp->session_list != NULL) {
 		listp = dp->session_list;
 
 		for (int i = 0; i < get_data_pool_service_session_limit(); i++) {
 			fd = sd_event_source_get_io_fd(listp->socket_evsource);
-			ret = write(fd, &g_packet, sizeof(g_packet));
+			ret = write(fd, &service_packet, sizeof(service_packet));
 			if (ret < 0) {
 				if (errno == EINTR)
 					continue;
@@ -304,9 +348,10 @@ int data_pool_service_setup(sd_event *event, data_pool_service_handle *handle)
 		return -2;
 
 	// clean and setup data packet
-	memset(&g_packet, 0, sizeof(g_packet));
-	g_packet.header.magic = AGLCLUSTER_SERVICE_PACKETHEADER_MAGIC;
-	g_packet.header.version = AGLCLUSTER_SERVICE_PACKET_VERSION_V1;
+	memset(&g_packet_header, 0, sizeof(g_packet_header));
+	g_packet_header.magic = AGLCLUSTER_SERVICE_PACKETHEADER_MAGIC;
+	g_packet_header.version = AGLCLUSTER_SERVICE_PACKET_VERSION_V1;
+	g_packet_header.seqnum = 0;
 
 	// unlink existing sicket file.
 	if (get_data_pool_service_socket_name_type() == 0) {
@@ -374,7 +419,7 @@ int data_pool_service_setup(sd_event *event, data_pool_service_handle *handle)
 		goto err_return;
 	}
 
-	// After the automaticall fd close settig shall not close fd in error path
+	// After the automaticall fd close setting shall not close fd in error path
 	fd = -1;
 
 	dp->socket_evsource = socket_source;
@@ -390,7 +435,7 @@ int data_pool_service_setup(sd_event *event, data_pool_service_handle *handle)
 		event,
 		&timer_source,
 		CLOCK_MONOTONIC,
-		dp->notification_timer->timerval, // triger time (usec)
+		dp->notification_timer->timerval, // trigger time (usec)
 		1 * 1000,			  // accuracy (1000usec)
 		timer_handler,
 		dp);
@@ -400,6 +445,23 @@ int data_pool_service_setup(sd_event *event, data_pool_service_handle *handle)
 	}
 
 	dp->notification_timer->timer_evsource = timer_source;
+
+	dp->speed_barrel.barrel_num = get_data_pool_fixed_interval_smoothing_sp_analog_val() / get_data_pool_notification_interval();
+	dp->speed_barrel.barrel_wp = 0U;
+	dp->speed_barrel.barrel = (uint32_t*)malloc(sizeof(uint32_t) * dp->speed_barrel.barrel_num);
+	if (dp->speed_barrel.barrel == NULL) {
+		ret = -1;
+		goto err_return;
+	}
+	dp->tacho_barrel.barrel_num = get_data_pool_fixed_interval_smoothing_ta_analog_val() / get_data_pool_notification_interval();
+	dp->tacho_barrel.barrel_wp = 0;
+	dp->tacho_barrel.barrel = (uint32_t*)malloc(sizeof(uint32_t) * dp->tacho_barrel.barrel_num);
+	if (dp->tacho_barrel.barrel == NULL) {
+		ret = -1;
+		goto err_return;
+	}
+	(void) memset(dp->speed_barrel.barrel, 0, (sizeof(uint32_t) * dp->speed_barrel.barrel_num));
+	(void) memset(dp->tacho_barrel.barrel, 0, (sizeof(uint32_t) * dp->tacho_barrel.barrel_num));
 
 	ret = sd_event_source_set_enabled(timer_source, SD_EVENT_ON);
 	if (ret < 0) {
@@ -414,8 +476,11 @@ int data_pool_service_setup(sd_event *event, data_pool_service_handle *handle)
 err_return:
 	timer_source = sd_event_source_disable_unref(timer_source);
 	socket_source = sd_event_source_disable_unref(socket_source);
-	if (dp != NULL)
-		free(dp->notification_timer);
+	if (dp != NULL) {
+		(void) free(dp->tacho_barrel.barrel);
+		(void) free(dp->speed_barrel.barrel);
+		(void) free(dp->notification_timer);
+	}
 	free(dp);
 	if (fd != -1)
 		close(fd);
@@ -454,8 +519,10 @@ int data_pool_service_cleanup(data_pool_service_handle handle)
 	if (dp->notification_timer != NULL)
 		(void) sd_event_source_disable_unref(dp->notification_timer->timer_evsource);
 	(void) sd_event_source_disable_unref(dp->socket_evsource);
-	free(dp->notification_timer);
-	free(dp);
+	(void) free(dp->tacho_barrel.barrel);
+	(void) free(dp->speed_barrel.barrel);
+	(void) free(dp->notification_timer);
+	(void) free(dp);
 
 	return 0;
 }
