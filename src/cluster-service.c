@@ -7,8 +7,7 @@
 
 #include "cluster-service-util.h"
 #include "data-pool-service.h"
-#include "alarm-sound.h"
-
+#include "sound/alarm-sound.h"
 #include "source/data-source.h"
 
 #include <stdlib.h>
