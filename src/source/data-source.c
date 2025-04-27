@@ -4,6 +4,7 @@
  * @file	demo-data-generator.c
  * @brief	demo data generator for cluster service
  */
+#include "data-source.h"
 #ifdef DATA_SOURCE_FAKE
 #include "fake-data/demo-data-generator.h"
 #endif
@@ -27,9 +28,9 @@ struct s_data_source_handle {
 };
 typedef struct s_data_source_handle *data_source_handle_t;
 
-int data_source_setup(sd_event *event, data_source_handle_t *handle)
+int data_source_setup(sd_event *event, data_source_handle_t *handle, struct s_data_source_config *config)
 {
-	int result = 0;
+	int result = -1;
 	struct s_data_source_handle *dsh = NULL;
 
 	if (handle == NULL) {
@@ -45,24 +46,26 @@ int data_source_setup(sd_event *event, data_source_handle_t *handle)
 
 	dsh->dummy = NULL;
 #ifdef DATA_SOURCE_FAKE
-	{
+	if (config->demo == 1) {
 		int ret = -1;
 		ret = demo_data_generator_setup(event);
 		if (ret < 0) {
 			result = -1;
 			goto do_err_return;
 		}
+		result = 0;
 	}
 #endif
 
 #ifdef DATA_SOURCE_SOCKET_CAN
-	{
+	if (config->canif != NULL) {
 		int ret = -1;
-		ret = socketcan_client_setup_sdevent(event, &dsh->socketcan_handle);
+		ret = socketcan_client_setup_sdevent(event, &dsh->socketcan_handle, config->canif);
 		if (ret < 0) {
 			result = -1;
 			goto do_err_return;
 		}
+		result = 0;
 	}
 #endif
 
@@ -84,6 +87,7 @@ int data_source_cleanup(data_source_handle_t handle)
 		goto do_err_return;
 	}
 
+	dsh = (struct s_data_source_handle*)handle;
 #ifdef DATA_SOURCE_SOCKET_CAN
 	{
 		int ret = -1;

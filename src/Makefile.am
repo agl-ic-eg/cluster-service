@@ -43,14 +43,16 @@ endif
 
 CLEANFILES = *.gcda *.gcno
 
+SUBDIRS =
+
 if DATA_SOURCE_FAKE
-SUBDIRS = source/fake-data
+SUBDIRS += source/fake-data
 CFLAGS += -DDATA_SOURCE_FAKE
 cluster_service_LDADD += source/fake-data/libsource_fake_data.a
 endif
 
 if DATA_SOURCE_SOCKET_CAN
-SUBDIRS = source/socket-can
+SUBDIRS += source/socket-can
 CFLAGS += -DDATA_SOURCE_SOCKET_CAN
 cluster_service_LDADD += source/socket-can/libsource_socketcan.a
 endif

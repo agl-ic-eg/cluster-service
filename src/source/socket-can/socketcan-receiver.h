@@ -17,7 +17,7 @@ extern "C" {
 struct s_socketcan_client_sdevent;
 typedef struct s_socketcan_client_sdevent *socketcan_client_handle_sdevent;
 
-int socketcan_client_setup_sdevent(sd_event *event, socketcan_client_handle_sdevent *handle);
+int socketcan_client_setup_sdevent(sd_event *event, socketcan_client_handle_sdevent *handle, const char *canif);
 int socketcan_client_cleanup_sdevent(socketcan_client_handle_sdevent handle);
 #ifdef __cplusplus
 }

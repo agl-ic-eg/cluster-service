@@ -11,6 +11,8 @@
 
 
 uint64_t get_data_pool_notification_interval(void);
+uint64_t get_data_pool_fixed_interval_smoothing_sp_analog_val(void);
+uint64_t get_data_pool_fixed_interval_smoothing_ta_analog_val(void);
 int get_data_pool_service_session_limit(void);
 int get_data_pool_service_socket_name(char *str, int len);
 int get_data_pool_service_socket_name_type(void);

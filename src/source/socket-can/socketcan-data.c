@@ -2,64 +2,23 @@
 #include "socketcan-data.h"
 #include "data-pool.h"
 
-#define D_RPM_NORMALIZE_TABLES	(40)
-typedef struct s_rpm_normalize {
-	size_t wp;
-	int32_t data[D_RPM_NORMALIZE_TABLES];
-} rpm_normalize_t;
-static rpm_normalize_t g_rpm_normalize;
-
-int32_t rpm_normalize_push(int32_t new_val)
-{
-	g_rpm_normalize.data[g_rpm_normalize.wp] = new_val;
-	g_rpm_normalize.wp = (g_rpm_normalize.wp + 1) % D_RPM_NORMALIZE_TABLES;
-
-	int tmp = 0;
-	for(size_t i=0;i < D_RPM_NORMALIZE_TABLES;i++) {
-		tmp += g_rpm_normalize.data[i];
-	}
-
-	return (tmp / D_RPM_NORMALIZE_TABLES);
-}
-
-#define D_SPEED_NORMALIZE_TABLES	(40)
-typedef struct s_speed_normalize {
-	size_t wp;
-	int32_t data[D_SPEED_NORMALIZE_TABLES];
-} speed_normalize_t;
-static speed_normalize_t g_speed_normalize;
-
-int32_t speed_normalize_push(int32_t new_val)
-{
-	g_speed_normalize.data[g_speed_normalize.wp] = new_val;
-	g_speed_normalize.wp = (g_speed_normalize.wp + 1) % D_SPEED_NORMALIZE_TABLES;
-
-	int tmp = 0;
-	for(size_t i=0;i < D_SPEED_NORMALIZE_TABLES;i++) {
-		tmp += g_speed_normalize.data[i];
-	}
-
-	return (tmp / D_SPEED_NORMALIZE_TABLES);
-}
-
 static int can_handler_180(uint32_t can_id, uint8_t *payload, size_t data_length)
 {
 	//SG_ MotorRPM : 32|16@1- (0.5,0) [-16000|16000] "RPM"  EVPWR
 	{
-		int32_t tmp = 0, normalized = 0;
+		int32_t tmp = 0;
 		tmp = (((int32_t)payload[5] & 0x7fU) * 256) + ((int32_t)payload[4]);
 		if ((payload[5] & 0x80U) != 0) {
 			tmp = tmp * -1;
 		}
 
-		normalized = rpm_normalize_push(tmp) / 2;
 		uint32_t val = 0;
-		if (normalized < 0) {
-			val = 0;
-		} else if (normalized > 20000) {
-			val = 20000;
+		if (tmp < 0) {
+			val = 0U;
+		} else if ((tmp / 2) > 20000) {
+			val = 20000U;
 		} else {
-			val = (uint32_t)normalized;
+			val = (uint32_t)(tmp / 2);
 		}
 		data_pool_set_tacho_analog_val(val);
 	}	
@@ -91,17 +50,16 @@ static int can_handler_180(uint32_t can_id, uint8_t *payload, size_t data_length
 	
 	//SG_ VehicleSpeed : 16|12@1+ (0.05,0) [0|204.75] "km/h" EVPWR
 	{
-		int32_t tmp = 0, normalized = 0;
+		int32_t tmp = 0;
 		tmp = (((int32_t)payload[3] & 0x0fU) * 256) + ((int32_t)payload[2]);
 
-		normalized = speed_normalize_push(tmp) * 5;
 		uint32_t val = 0;
-		if (normalized < 0) {
-			val = 0;
-		} else if (normalized > 30000) {
+		if (tmp < 0) {
+			val = 0U;
+		} else if ((tmp / 2) > 30000) {
 			val = 30000;
 		} else {
-			val = (uint32_t)normalized;
+			val = (uint32_t)(tmp * 5);
 		}
 		data_pool_set_speed_analog_val(val);
 	}	
