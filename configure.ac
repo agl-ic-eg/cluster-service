@@ -78,6 +78,7 @@ AC_CONFIG_FILES([Makefile
 				cluster-api-systemd.pc
 				lib/Makefile
 				src/Makefile
+				src/sound/Makefile
 				src/source/fake-data/Makefile
 				src/source/socket-can/Makefile
 				example/Makefile

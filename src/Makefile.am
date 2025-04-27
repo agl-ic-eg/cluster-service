@@ -5,8 +5,6 @@ bin_PROGRAMS = cluster_service
 
 cluster_service_SOURCES = \
 	source/data-source.c \
-	incbin.c \
-	alarm-sound.c \
 	data-pool-service.c \
 	cluster-service-util.c \
 	cluster-service.c
@@ -16,6 +14,7 @@ cluster_service_SOURCES = \
 cluster_service_LDADD = \
 	$(top_builddir)/lib/libcluster_service_common.a \
 	$(top_builddir)/lib/libcluster_service_static_configurator.a \
+	$(top_builddir)/src/sound/libalarm_sound.a \
 	-lrt -lpthread \
 	@LIBSYSTEMD_LIBS@ \
 	@LIBALSA_LIBS@
@@ -43,7 +42,7 @@ endif
 
 CLEANFILES = *.gcda *.gcno
 
-SUBDIRS =
+SUBDIRS = sound
 
 if DATA_SOURCE_FAKE
 SUBDIRS += source/fake-data

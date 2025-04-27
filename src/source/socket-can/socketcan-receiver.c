@@ -6,7 +6,6 @@
  */
 
 #include "data-pool.h"
-#include "../../alarm-sound.h"
 #include "socketcan-receiver.h"
 #include "socketcan-data.h"
 
