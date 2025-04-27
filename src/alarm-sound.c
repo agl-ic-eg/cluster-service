@@ -4,20 +4,70 @@
 #include <pthread.h>
 #include <time.h>
 
+#include "data-pool.h"
 
+// Worker state
+#define ALARM_SOUND_WORKER_CREATE		(0x10U)
+#define ALARM_SOUND_WORKER_RUN			(0x80U)
+#define ALARM_SOUND_WORKER_END			(0xa0U)
+
+typedef int (*alarm_sound_judge_func_t)(void);
+struct s_alarm_sound_service_config {
+	unsigned int priority;
+	unsigned int sound_index;
+	alarm_sound_judge_func_t func; 
+};
+
+static int seatbelt_alarm(void)
+{
+	int result = 0;	// Don't need alarm sound.
+	int32_t right_seatbelt = -1;
+	int32_t left_seatbelt = -1;
+	uint32_t speed_value = 0;
+	const uint32_t speed_threshold = 1000;	//10km/h
+
+	right_seatbelt = data_pool_get_front_right_seatbelt();
+	left_seatbelt = data_pool_get_front_left_seatbelt();
+	speed_value = data_pool_get_speed_analog_val();
+
+	if (speed_value >= speed_threshold) {
+		if ((right_seatbelt == 0) || (left_seatbelt == 0)) {
+			result = 1;	// Need alarm sound.
+		}
+	}
+
+	return result;
+}
+
+static const struct s_alarm_sound_service_config alarm_sound_service_config[] = {
+	[0] = {
+		.priority = 1,
+		.sound_index = 0,
+		.func = seatbelt_alarm,
+	},
+};
+
+#define ALARM_SOUND_TABLES		(3)
 typedef struct s_sound_table {
 	unsigned char *data_top;
 	size_t	samples;
 } sound_table_t;
+static sound_table_t g_alarm_sound_table[ALARM_SOUND_TABLES];
 
+struct s_alarm_sound_service {
+	uint32_t worker_state;
+	pthread_t worker_thread;
+};
+
+static char *device = "default";			/* playback device */
+static __attribute__((aligned(16))) short g_dummy_buffer[2*48000/2/10] = {0};	//100ms silent buffer
 static void *alarm_sound_worker_thread(void* arg);
 
-static sound_table_t g_alarm_sound_table[3];
-
-int create_alarm_sound_worker(alarm_sound_worker_t **worker)
+static void alarm_sound_table_setup(void)
 {
-	alarm_sound_worker_t *p = NULL;
-	int ret = -1;
+	if (g_alarm_sound_table[0].data_top != NULL) {
+		return;	//Already setup
+	}
 
 	g_alarm_sound_table[0].data_top = (unsigned char*)&incbin_alarm0_start[0];
 	g_alarm_sound_table[0].samples = (size_t)(&incbin_alarm0_end[0] - &incbin_alarm0_start[0])/4;
@@ -25,125 +75,159 @@ int create_alarm_sound_worker(alarm_sound_worker_t **worker)
 	g_alarm_sound_table[1].samples = (size_t)(&incbin_alarm1_end[0] - &incbin_alarm1_start[0])/4;
 	g_alarm_sound_table[2].data_top = (unsigned char*)&incbin_alarm2_start[2];
 	g_alarm_sound_table[2].samples = (size_t)(&incbin_alarm2_end[0] - &incbin_alarm2_start[0])/4;
+}
 
-	p = (alarm_sound_worker_t*)malloc(sizeof(alarm_sound_worker_t));
-	if (p == NULL) {
-		return -1;
+static int alarm_sound_judge(void)
+{
+	int result = -1;
+	unsigned int priority = 0;
+	unsigned int sound_index = 0;
+	
+	for(size_t i=0; i < (sizeof(alarm_sound_service_config) / sizeof(struct s_alarm_sound_service_config)); i++) {
+		const struct s_alarm_sound_service_config *config = &alarm_sound_service_config[i];
+
+		int ret = config->func();
+		if (ret == 1) {
+			if (priority < config->priority) {
+				priority = config->priority;
+				sound_index = config->sound_index;
+			}
+		}
 	}
 
-	memset(p, 0, sizeof(alarm_sound_worker_t));
-
-	ret = pthread_create(&p->worker_thread, NULL, alarm_sound_worker_thread, p);
-	if (ret < 0) {
-		free(p);
-		return -1;
+	if (priority > 0) {
+		if (sound_index < ALARM_SOUND_TABLES) {
+			result = (int)sound_index;
+		} else {
+			result = 0;
+		}
 	}
 
-	(*worker) = p;
+	return result;
+} 
 
-	return 0;
-}
-
-int set_command_alarm_sound_worker(alarm_sound_worker_t *worker, int command)
+static void alarm_wait(void)
 {
-	if (worker == NULL)
-		return -1;
-
-	worker->command = command;
-
-	return 0;
+	// 100ms wait
+	struct timespec wait_time = {.tv_sec = 0, .tv_nsec = 100 * 1000 * 1000};
+	(void)clock_nanosleep(CLOCK_MONOTONIC, 0, &wait_time, NULL);
 }
-
-
-int release_alarm_sound_worker(alarm_sound_worker_t *worker)
-{
-	if (worker == NULL)
-		return -1;
-
-	worker->command = ALARM_SOUND_WORKER_END;
-
-	return 0;
-}
-
-
-static char *device = "default";			/* playback device */
-
-static __attribute__((aligned(16))) short g_dummy_buffer[2*48000/2/10] = {0};	//100ms silent buffer
 
 static void *alarm_sound_worker_thread(void* arg)
 {
 	int ret = -1;
 	unsigned int i;
-	snd_pcm_t *handle = NULL;
-	snd_pcm_sframes_t frames;
-	alarm_sound_worker_t *worker = (alarm_sound_worker_t *)arg;
-	int index = -1;
+	snd_pcm_t *pcm_handle = NULL;
+	alarm_sound_service_handle handle = (alarm_sound_service_handle)arg;
 
 	do {
-		ret = snd_pcm_open(&handle, device, SND_PCM_STREAM_PLAYBACK, 0);
-		if (!(ret < 0))
+		ret = snd_pcm_open(&pcm_handle, device, SND_PCM_STREAM_PLAYBACK, 0);
+		if (ret >= 0) {
 			break;
+		}
 
-		if (worker->command == ALARM_SOUND_WORKER_END) {
+		if (handle->worker_state == ALARM_SOUND_WORKER_END) {
 			goto return_func;
 		}
 
-		{
-			// 10ms wait
-			struct timespec wait_time = {.tv_sec = 0, .tv_nsec = 10 * 1000 * 1000};
-			(void)clock_nanosleep(CLOCK_MONOTONIC, 0, &wait_time, NULL);
-		}
+		alarm_wait();
 	} while(1);
 
-	ret = snd_pcm_set_params(handle, SND_PCM_FORMAT_S16_LE, SND_PCM_ACCESS_RW_INTERLEAVED, 2, 48000, 1, 50000 );
+	ret = snd_pcm_set_params(pcm_handle, SND_PCM_FORMAT_S16_LE, SND_PCM_ACCESS_RW_INTERLEAVED, 2, 48000, 1, 50000 );
 	if (ret < 0) {
 		fprintf(stderr, "Playback open error: %s\n", snd_strerror(ret));
 		goto return_func;
 	}
 
-    while(1) {
-		if (worker->command == ALARM_SOUND_WORKER_PLAY0) {
-			index = 0;
-		} else if (worker->command == ALARM_SOUND_WORKER_PLAY1) {
-			index = 1;
-		} else if (worker->command == ALARM_SOUND_WORKER_PLAY2) {
-			index = 2;
-		} else if (worker->command == ALARM_SOUND_WORKER_END) {
+	while(1) {
+		snd_pcm_sframes_t frames;
+
+		if (handle->worker_state == ALARM_SOUND_WORKER_END) {
 			break;
-		} else {
-			index = -1;
 		}
 
-		if (index >= 0 && index < 3) {
-			frames = snd_pcm_writei(handle, g_alarm_sound_table[index].data_top, g_alarm_sound_table[index].samples );
-			if (frames < 0)
-				frames = snd_pcm_recover(handle, frames, 0);
+		int alarm_ops = alarm_sound_judge();
+
+		if ((alarm_ops >= 0) && (alarm_ops < 3)) {
+			frames = snd_pcm_writei(pcm_handle, g_alarm_sound_table[alarm_ops].data_top, g_alarm_sound_table[alarm_ops].samples );
+
 			if (frames < 0) {
-				fprintf(stderr, "snd_pcm_writei failed: %s\n", snd_strerror(frames));
-				goto return_func;
-			}
-			if (frames > 0 && frames < g_alarm_sound_table[index].samples ) {
-				fprintf(stderr, "Short write (expected %li, wrote %li)\n", g_alarm_sound_table[index].samples, frames);
+				int recover_ret = snd_pcm_recover(pcm_handle, frames, 0);
+				if (recover_ret < 0) {
+					alarm_wait();
+				}	
 			}
 		} else {
-			frames = snd_pcm_writei(handle, &g_dummy_buffer[0], sizeof(g_dummy_buffer)/4 );
-			if (frames < 0)
-				frames = snd_pcm_recover(handle, frames, 0);
+			frames = snd_pcm_writei(pcm_handle, &g_dummy_buffer[0], sizeof(g_dummy_buffer)/4 );
 			if (frames < 0) {
-				fprintf(stderr, "snd_pcm_writei failed: %s\n", snd_strerror(frames));
-				goto return_func;
-			}
-			if (frames > 0 && frames < sizeof(g_dummy_buffer)/4) {
-				printf("Short write (expected %li, wrote %li)\n", sizeof(g_dummy_buffer)/4  , frames);
+				int recover_ret = snd_pcm_recover(pcm_handle, frames, 0);
+				if (recover_ret < 0) {
+					alarm_wait();
+				}	
 			}
 		}
 	}
 
-	(void) snd_pcm_drain(handle);
+	(void) snd_pcm_drain(pcm_handle);
 
 return_func:
-	if (handle != NULL)
-		snd_pcm_close(handle);
+	if (pcm_handle != NULL)
+		snd_pcm_close(pcm_handle);
 
 	return 0;
+}
+
+int alarm_sound_service_setup(alarm_sound_service_handle *handle)
+{
+	struct s_alarm_sound_service *p = NULL;
+	int result = -1;
+	int ret = -1;
+
+	alarm_sound_table_setup();
+
+	p = (struct s_alarm_sound_service*)malloc(sizeof(struct s_alarm_sound_service));
+	if (p == NULL) {
+		result -1;
+		goto error_return;
+	}
+
+	memset(p, 0, sizeof(struct s_alarm_sound_service));
+
+	ret = pthread_create(&p->worker_thread, NULL, alarm_sound_worker_thread, p);
+	if (ret < 0) {
+		result -2;
+		goto error_return;
+	}
+
+	p->worker_state = ALARM_SOUND_WORKER_CREATE;
+
+	(*handle) = (alarm_sound_service_handle)p;
+
+	return 0;
+
+error_return:
+	(void) free(p);
+
+	return result;
+}
+
+int alarm_sound_service_cleanup(alarm_sound_service_handle handle)
+{
+	int result = 0;
+	void *val = NULL;
+
+	if (handle == NULL) {
+		result = -1;
+		goto error_return;
+	}
+	if (handle->worker_state != ALARM_SOUND_WORKER_END ) {
+		handle->worker_state = ALARM_SOUND_WORKER_END;
+		pthread_join(handle->worker_thread, &val);	
+	}
+
+	(void) free(handle);
+
+error_return:
+
+	return result;
 }
