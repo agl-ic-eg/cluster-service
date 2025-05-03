@@ -29,7 +29,7 @@ int32_t data_pool_get_turn_l(void);
 void data_pool_set_brake(int32_t val);
 int32_t data_pool_get_brake(void);
 
-void data_pool_set_seatbelt(int32_t val);
+// Auto update seatbelt value
 int32_t data_pool_get_seatbelt(void);
 
 void data_pool_set_front_right_seatbelt(int32_t val);
