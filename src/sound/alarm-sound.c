@@ -21,17 +21,15 @@ struct s_alarm_sound_service_config {
 static int seatbelt_alarm(void)
 {
 	int result = 0;	// Don't need alarm sound.
-	int32_t right_seatbelt = -1;
-	int32_t left_seatbelt = -1;
+	int32_t seatbelt = -1;
 	uint32_t speed_value = 0;
 	const uint32_t speed_threshold = 1000;	//10km/h
 
-	right_seatbelt = data_pool_get_front_right_seatbelt();
-	left_seatbelt = data_pool_get_front_left_seatbelt();
+	seatbelt = data_pool_get_seatbelt();
 	speed_value = data_pool_get_speed_analog_val();
 
 	if (speed_value >= speed_threshold) {
-		if ((right_seatbelt == 0) || (left_seatbelt == 0)) {
+		if (seatbelt == IC_HMI_ON) {
 			result = 1;	// Need alarm sound.
 		}
 	}
