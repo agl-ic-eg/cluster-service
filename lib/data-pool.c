@@ -693,14 +693,39 @@ int32_t data_pool_get_high_beam(void)
 }
 
 /**
- * Data pool setter for Door
+ * Data pool updater for Door
  *
- * @param [in]	val		ON/OFF for Door Telltale
  * @return void
  */
-void data_pool_set_door(int32_t val)
+static void data_pool_update_door(void)
 {
-	g_agl_cluster_data_pool.data.door = val;
+	int32_t value = IC_HMI_OFF;
+
+	if (g_agl_cluster_data_pool.data.frontRightDoor == IC_HMI_ON) {
+		value = IC_HMI_ON;
+	}
+
+	if (g_agl_cluster_data_pool.data.frontLeftDoor == IC_HMI_ON) {
+		value = IC_HMI_ON;
+	}
+
+	if (g_agl_cluster_data_pool.data.rearRightDoor == IC_HMI_ON) {
+		value = IC_HMI_ON;
+	}
+
+	if (g_agl_cluster_data_pool.data.rearLeftDoor == IC_HMI_ON) {
+		value = IC_HMI_ON;
+	}
+
+	if (g_agl_cluster_data_pool.data.trunkDoor == IC_HMI_ON) {
+		value = IC_HMI_ON;
+	}
+
+	if (g_agl_cluster_data_pool.data.hoodDoor == IC_HMI_ON) {
+		value = IC_HMI_ON;
+	}
+
+	g_agl_cluster_data_pool.data.door = value;
 }
 /**
  * Data pool getter for Door
@@ -723,6 +748,7 @@ int32_t data_pool_get_door(void)
 void data_pool_set_front_right_door(int32_t val)
 {
 	g_agl_cluster_data_pool.data.frontRightDoor = val;
+	data_pool_update_door();
 }
 /**
  * Data pool getter for Door at Front Right
@@ -745,6 +771,7 @@ int32_t data_pool_get_front_right_door(void)
 void data_pool_set_front_left_door(int32_t val)
 {
 	g_agl_cluster_data_pool.data.frontLeftDoor = val;
+	data_pool_update_door();
 }
 /**
  * Data pool getter for Door at Front Left
@@ -767,6 +794,7 @@ int32_t data_pool_get_front_left_door(void)
 void data_pool_set_rear_right_door(int32_t val)
 {
 	g_agl_cluster_data_pool.data.rearRightDoor = val;
+	data_pool_update_door();
 }
 /**
  * Data pool getter for Door at Rear Right
@@ -789,6 +817,7 @@ int32_t data_pool_get_rear_right_door(void)
 void data_pool_set_rear_left_door(int32_t val)
 {
 	g_agl_cluster_data_pool.data.rearLeftDoor = val;
+	data_pool_update_door();
 }
 /**
  * Data pool getter for Door at Rear Left
@@ -811,6 +840,7 @@ int32_t data_pool_get_rear_left_door(void)
 void data_pool_set_trunk_door(int32_t val)
 {
 	g_agl_cluster_data_pool.data.trunkDoor = val;
+	data_pool_update_door();
 }
 /**
  * Data pool getter for Trunk Door
@@ -833,6 +863,7 @@ int32_t data_pool_get_trunk_door(void)
 void data_pool_set_hood_door(int32_t val)
 {
 	g_agl_cluster_data_pool.data.hoodDoor = val;
+	data_pool_update_door();
 }
 /**
  * Data pool getter for Hood Door
