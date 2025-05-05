@@ -21,8 +21,26 @@ static int can_handler_180(uint32_t can_id, uint8_t *payload, size_t data_length
 			val = (uint32_t)(tmp / 2);
 		}
 		data_pool_set_tacho_analog_val(val);
-	}	
-	
+	}
+
+	//SG_ VehicleSpeed : 16|12@1+ (0.05,0) [0|204.75] "km/h" EVPWR
+	{
+		int32_t tmp = 0;
+		tmp = (((int32_t)payload[3] & 0x0fU) * 256) + ((int32_t)payload[2]);
+
+		uint32_t val = 0;
+		if (tmp < 0) {
+			val = 0U;
+		} else if ((tmp / 2) > 30000) {
+			val = 30000;
+		} else {
+			val = (uint32_t)(tmp * 5);
+		}
+		data_pool_set_speed_analog_val(val);
+	}
+
+	//SG_ BrakePedal : 15|1@1+ (1,0) [0|0] "" EVPWR
+
 	//SG_ Gear : 12|3@1+ (1,0) [0|7] "" EVPWR
 	//VAL_ 180 Gear 7 "GEAR_SNA" 5 "GEAR_B" 4 "GEAR_D" 3 "GEAR_N" 2 "GEAR_R" 1 "GEAR_P" 0 "GEAR_INVALID" ;
 	{
@@ -45,24 +63,86 @@ static int can_handler_180(uint32_t can_id, uint8_t *payload, size_t data_length
 		}
 		data_pool_set_gear_at_val(gear_val);
 	}
-	
-	//SG_ BrakePedal : 15|1@1+ (1,0) [0|0] "" EVPWR
-	
-	//SG_ VehicleSpeed : 16|12@1+ (0.05,0) [0|204.75] "km/h" EVPWR
-	{
-		int32_t tmp = 0;
-		tmp = (((int32_t)payload[3] & 0x0fU) * 256) + ((int32_t)payload[2]);
 
-		uint32_t val = 0;
-		if (tmp < 0) {
-			val = 0U;
-		} else if ((tmp / 2) > 30000) {
-			val = 30000;
+	//SG_ MotorFaultLamp : 1|1@1+ (1,0) [0|1] "" EVPWR
+	{
+		uint8_t tmp = 0;
+		tmp = (payload[0] & 0x02U);
+		if (tmp != 0) {
+			data_pool_set_engine(IC_HMI_ON);
 		} else {
-			val = (uint32_t)(tmp * 5);
+			data_pool_set_engine(IC_HMI_OFF);
 		}
-		data_pool_set_speed_analog_val(val);
-	}	
+	}
+
+	return 0;
+}
+
+static int can_handler_184(uint32_t can_id, uint8_t *payload, size_t data_length)
+{
+	// SG_ ESP_espOffLamp : 31|1@1+ (1,0) [0|1] ""  ESP
+	{
+		uint8_t tmp = 0;
+		tmp = (payload[3] & 0x80U);
+		if (tmp != 0) {
+			data_pool_set_esp_off(IC_HMI_ON);
+		} else {
+			data_pool_set_esp_off(IC_HMI_OFF);
+		}
+	}
+
+	// SG_ ESP_absFaultLamp : 27|1@1+ (1,0) [0|1] ""  ESP
+	{
+		uint8_t tmp = 0;
+		tmp = (payload[3] & 0x08U);
+		if (tmp != 0) {
+			data_pool_set_abs(IC_HMI_ON);
+		} else {
+			data_pool_set_abs(IC_HMI_OFF);
+		}
+	}
+
+	// SG_ ESP_espFaultLamp : 6|1@1+ (1,0) [0|1] ""  ESP
+	{
+		uint8_t tmp = 0;
+		tmp = (payload[0] & 0x40U);
+		if (tmp != 0) {
+			data_pool_set_esp_act(IC_HMI_ON);
+		} else {
+			data_pool_set_esp_act(IC_HMI_OFF);
+		}
+	}
+
+	// SG_ ESP_brakeLamp : 3|1@1+ (1,0) [0|1] ""  ESP
+	{
+		/* nop */
+	}
+
+	// SG_ ESP_absBrakeEvent : 2|1@1+ (1,0) [0|1] ""  ESP
+	{
+		/* nop */
+	}
+
+	return 0;
+}
+
+static int can_handler_192(uint32_t can_id, uint8_t *payload, size_t data_length)
+{
+	//SG_ EpsFaultLamp : 6|1@1+ (1,0) [0|1] ""  EPS
+	{
+		uint8_t tmp = payload[0] & 0x40U;
+
+		if (tmp != 0) {
+			data_pool_set_eps(IC_HMI_ON);
+		} else {
+			data_pool_set_eps(IC_HMI_OFF);
+		}
+	}
+
+	//SG_ EpsEnable : 0|1@1+ (1,0) [0|1] ""  EPS
+	{
+		/* nop */
+	}
 
 	return 0;
 }
@@ -75,13 +155,11 @@ static int can_handler_142(uint32_t can_id, uint8_t *payload, size_t data_length
 
 		if (tmp != 0) {
 			data_pool_set_front_left_door(IC_HMI_ON);
-			//fprintf(stderr, "data_pool_set_front_left_door(IC_HMI_ON)\n");
 		} else {
 			data_pool_set_front_left_door(IC_HMI_OFF);
-			//fprintf(stderr, "data_pool_set_front_left_door(IC_HMI_OFF)\n");
 		}
 	}
-	
+
 	//SG_ FrontRightDoor : 5|1@1+ (1,0) [0|0] ""  BCM
 	{
 		uint8_t tmp = payload[0] & 0x20U;
@@ -125,6 +203,7 @@ static int can_handler_142(uint32_t can_id, uint8_t *payload, size_t data_length
 			data_pool_set_front_left_seatbelt(IC_HMI_OFF);
 		}
 	}
+
 	//SG_ RightSeatBelt : 13|1@1+ (1,0) [0|0] ""  BCM
 	{
 		uint8_t tmp = payload[1] & 0x20U;
@@ -138,20 +217,54 @@ static int can_handler_142(uint32_t can_id, uint8_t *payload, size_t data_length
 
 	return 0;
 }
-/*
-static int can_handler_180(uint32_t can_id, uint8_t *payload, size_t data_length)
+
+static int can_handler_143(uint32_t can_id, uint8_t *payload, size_t data_length)
 {
-	fprintf(stderr, "can id: 0x%03X [%d]", can_id, can_id);
+	//SG_ ImmobilizerFaultLamp : 4|1@1+ (1,0) [0|0] ""  BCM
+	{
+		uint8_t tmp = payload[0] & 0x10U;
 
-	for(size_t i = 0; i < data_length; i++) {
-		fprintf(stderr, " 0x%02X", payload[i]);
+		if (tmp != 0) {
+			data_pool_set_immobi(IC_HMI_ON);
+		} else {
+			data_pool_set_immobi(IC_HMI_OFF);
+		}
 	}
-
-	fprintf(stderr, "\n");
 
 	return 0;
 }
-*/
+
+static int can_handler_986(uint32_t can_id, uint8_t *payload, size_t data_length)
+{
+	//SG_ PT_HazardOn : 0|1@1+ (1,0) [0|1] "" Vector_XXX
+	{
+		/* nop */
+	}
+
+	//SG_ PT_LeftTurnOn : 1|1@1+ (1,0) [0|1] "" Vector_XXX
+	{
+		uint8_t tmp = payload[0] & 0x02U;
+
+		if (tmp != 0) {
+			data_pool_set_turn_l(IC_HMI_ON);
+		} else {
+			data_pool_set_turn_l(IC_HMI_OFF);
+		}
+	}
+
+	//SG_ PT_RightTurnOn : 2|1@1+ (1,0) [0|1] "" Vector_XXX
+	{
+		uint8_t tmp = payload[0] & 0x04U;
+
+		if (tmp != 0) {
+			data_pool_set_turn_r(IC_HMI_ON);
+		} else {
+			data_pool_set_turn_r(IC_HMI_OFF);
+		}
+	}
+
+	return 0;
+}
 
 static socketcan_data_handling_t socketcan_data_handling_table[] = {
 	{
@@ -159,8 +272,24 @@ static socketcan_data_handling_t socketcan_data_handling_table[] = {
 		.handler = can_handler_180,
 	},
 	{
+		.can_id = 184,
+		.handler = can_handler_184,
+	},
+	{
+		.can_id = 192,
+		.handler = can_handler_192,
+	},
+	{
 		.can_id = 142,
 		.handler = can_handler_142,
+	},
+	{
+		.can_id = 143,
+		.handler = can_handler_143,
+	},
+	{
+		.can_id = 986,
+		.handler = can_handler_986,
 	},
 };
 
