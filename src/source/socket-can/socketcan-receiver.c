@@ -167,7 +167,7 @@ int socketcan_client_setup_sdevent(sd_event *event, socketcan_client_handle_sdev
 	struct sockaddr_can can_addr;
 	struct ifreq can_ifr;
 	struct s_socketcan_client_sdevent *scp = NULL;
-	int sasize = -1;
+	size_t canif_name_len = 0;
 	int fd = -1;
 	int ret = -1;
 	int result = -1;
@@ -194,7 +194,8 @@ int socketcan_client_setup_sdevent(sd_event *event, socketcan_client_handle_sdev
 	}
 
 	memset(&can_ifr, 0, sizeof(can_ifr));
-	(void) strncpy(can_ifr.ifr_name, canif, sizeof(can_ifr.ifr_name));
+	canif_name_len = strnlen(canif, sizeof(can_ifr.ifr_name));
+	(void) memcpy(can_ifr.ifr_name, canif, canif_name_len);
 	ret = ioctl(fd, SIOCGIFINDEX, &can_ifr);
 	if (ret < 0) {
 		result = -1;
