@@ -519,8 +519,10 @@ int data_pool_service_cleanup(data_pool_service_handle handle)
 	if (dp->notification_timer != NULL)
 		(void) sd_event_source_disable_unref(dp->notification_timer->timer_evsource);
 	(void) sd_event_source_disable_unref(dp->socket_evsource);
-	free(dp->notification_timer);
-	free(dp);
+	(void) free(dp->tacho_barrel.barrel);
+	(void) free(dp->speed_barrel.barrel);
+	(void) free(dp->notification_timer);
+	(void) free(dp);
 
 	return 0;
 }
