@@ -13,7 +13,19 @@ extern "C" {
 #define UNIT_TEST
 #include "../src/data-pool-service.c"
 
+}
 
+data_pool_service_handle alloc_dummy_dp()
+{
+	data_pool_service_handle dp = (data_pool_service_handle)calloc(1, sizeof(struct s_data_pool_service));
+	dp->speed_barrel.barrel_num = 16;
+	dp->speed_barrel.barrel_wp = 0;
+	dp->speed_barrel.barrel = (uint32_t*)malloc(sizeof(uint32_t) * 16);
+	dp->tacho_barrel.barrel_num = 16;
+	dp->tacho_barrel.barrel_wp = 0;
+	dp->tacho_barrel.barrel = (uint32_t*)malloc(sizeof(uint32_t) * 16);
+
+	return dp;
 }
 // Test Terget files ---------------------------------------
 using namespace ::testing;
@@ -29,7 +41,7 @@ TEST_F(data_pool_service_test_timer, test_timer_handler__timer_handler_call)
 	uint64_t refval = 0;
 
 	//dummy data alloc
-	data_pool_service_handle dp = (data_pool_service_handle)calloc(1,sizeof(struct s_data_pool_service));
+	data_pool_service_handle dp = alloc_dummy_dp();
 	dp->notification_timer = (struct s_data_pool_notification_timer*)calloc(1,sizeof(struct s_data_pool_notification_timer));
 
 	// sd_event_source_set_time fail
