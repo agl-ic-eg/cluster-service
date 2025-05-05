@@ -14,7 +14,9 @@ extern "C" {
 #include "../src/data-pool-service.c"
 /** data pool service static configurator. It shall be set statically bosth service and client library.*/
 struct s_data_pool_service_configure {
-	uint64_t notification_interval; /**< Parametor for data pool notification interval */
+	uint64_t notification_interval; /**< Parameter for data pool notification interval */
+	uint64_t fixed_interval_smoothing_sp_analog_val; /**< Parameter for fixed-interval smoothing for speed value */
+	uint64_t fixed_interval_smoothing_ta_analog_val; /**< Parameter for fixed-interval smoothing for tacho value */
 
 	int32_t data_pool_service_session_limit; /**< Parametor for internal limitation for datapool service
 						    sessions. It use link list search limit. */
@@ -27,12 +29,16 @@ struct s_data_pool_service_configure g_config;
 
 const struct s_data_pool_service_configure g_config_a = {
 	(16 * 1000),	  // usec
+	(1000 * 1000),	  // 1sec
+	(1000 * 1000),	  // 1sec
 	(100), // counts
 	"\0/agl/agl-cluster-service",
 };
 
 const struct s_data_pool_service_configure g_config_b = {
 	(256 * 1000),	  // usec
+	(1000 * 1000),	  // 1sec
+	(1000 * 1000),	  // 1sec
 	(1), // counts
 	"/tmp/agl/agl-cluster-service",
 };
@@ -45,6 +51,26 @@ const struct s_data_pool_service_configure g_config_b = {
 uint64_t get_data_pool_notification_interval(void)
 {
 	return g_config.notification_interval;
+}
+
+/**
+ * Getter for the data pool fixed-interval smoothing for speed value.
+ *
+ * @return uint64_t	 Interval smoothing time for speed value.
+ */
+uint64_t get_data_pool_fixed_interval_smoothing_sp_analog_val(void)
+{
+	return g_config.fixed_interval_smoothing_sp_analog_val;
+}
+
+/**
+ * Getter for the data pool fixed-interval smoothing for tacho value.
+ *
+ * @return uint64_t	 Interval smoothing time for tacho value.
+ */
+uint64_t get_data_pool_fixed_interval_smoothing_ta_analog_val(void)
+{
+	return g_config.fixed_interval_smoothing_ta_analog_val;
 }
 
 /**
@@ -135,7 +161,7 @@ TEST_F(data_pool_service_test_init, test_data_pool_service_setup__socket_error)
 	sd_event *event = (sd_event *)(0xaaff);
 
 	// clean global
-	memset(&g_packet,0,sizeof(g_packet));
+	memset(&g_packet_header,0,sizeof(g_packet_header));
 	// test static config set
 	memcpy(&g_config,&g_config_a,sizeof(g_config_a));
 
@@ -148,11 +174,11 @@ TEST_F(data_pool_service_test_init, test_data_pool_service_setup__socket_error)
 
 	ret = data_pool_service_setup(event, &dp);
 	ASSERT_EQ(-1, ret);
-	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKETHEADER_MAGIC, g_packet.header.magic);
-	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKET_VERSION_V1, g_packet.header.version);
+	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKETHEADER_MAGIC, g_packet_header.magic);
+	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKET_VERSION_V1, g_packet_header.version);
 
 	// clean global
-	memset(&g_packet,0,sizeof(g_packet));
+	memset(&g_packet_header,0,sizeof(g_packet_header));
 	// test static config set
 	memcpy(&g_config,&g_config_b,sizeof(g_config_b));
 
@@ -167,8 +193,8 @@ TEST_F(data_pool_service_test_init, test_data_pool_service_setup__socket_error)
 
 	ret = data_pool_service_setup(event, &dp);
 	ASSERT_EQ(-1, ret);
-	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKETHEADER_MAGIC, g_packet.header.magic);
-	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKET_VERSION_V1, g_packet.header.version);
+	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKETHEADER_MAGIC, g_packet_header.magic);
+	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKET_VERSION_V1, g_packet_header.version);
 
 }
 //--------------------------------------------------------------------------------------------------------
@@ -179,7 +205,7 @@ TEST_F(data_pool_service_test_init, test_data_pool_service_setup__bind_error)
 	sd_event *event = (sd_event *)(0xaaff);
 
 	// clean global
-	memset(&g_packet,0,sizeof(g_packet));
+	memset(&g_packet_header,0,sizeof(g_packet_header));
 	// test static config set
 	memcpy(&g_config,&g_config_a,sizeof(g_config_a));
 
@@ -196,8 +222,8 @@ TEST_F(data_pool_service_test_init, test_data_pool_service_setup__bind_error)
 
 	ret = data_pool_service_setup(event, &dp);
 	ASSERT_EQ(-1, ret);
-	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKETHEADER_MAGIC, g_packet.header.magic);
-	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKET_VERSION_V1, g_packet.header.version);
+	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKETHEADER_MAGIC, g_packet_header.magic);
+	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKET_VERSION_V1, g_packet_header.version);
 
 }
 //--------------------------------------------------------------------------------------------------------
@@ -208,7 +234,7 @@ TEST_F(data_pool_service_test_init, test_data_pool_service_setup__listen_error)
 	sd_event *event = (sd_event *)(0xaaff);
 
 	// clean global
-	memset(&g_packet,0,sizeof(g_packet));
+	memset(&g_packet_header,0,sizeof(g_packet_header));
 	// test static config set
 	memcpy(&g_config,&g_config_a,sizeof(g_config_a));
 
@@ -227,8 +253,8 @@ TEST_F(data_pool_service_test_init, test_data_pool_service_setup__listen_error)
 
 	ret = data_pool_service_setup(event, &dp);
 	ASSERT_EQ(-1, ret);
-	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKETHEADER_MAGIC, g_packet.header.magic);
-	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKET_VERSION_V1, g_packet.header.version);
+	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKETHEADER_MAGIC, g_packet_header.magic);
+	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKET_VERSION_V1, g_packet_header.version);
 
 }
 //--------------------------------------------------------------------------------------------------------
@@ -239,7 +265,7 @@ TEST_F(data_pool_service_test_init, test_data_pool_service_setup__sd_event_add_i
 	sd_event *event = (sd_event *)(0xaaff);
 
 	// clean global
-	memset(&g_packet,0,sizeof(g_packet));
+	memset(&g_packet_header,0,sizeof(g_packet_header));
 	// test static config set
 	memcpy(&g_config,&g_config_a,sizeof(g_config_a));
 
@@ -260,8 +286,8 @@ TEST_F(data_pool_service_test_init, test_data_pool_service_setup__sd_event_add_i
 
 	ret = data_pool_service_setup(event, &dp);
 	ASSERT_EQ(-1, ret);
-	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKETHEADER_MAGIC, g_packet.header.magic);
-	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKET_VERSION_V1, g_packet.header.version);
+	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKETHEADER_MAGIC, g_packet_header.magic);
+	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKET_VERSION_V1, g_packet_header.version);
 
 }
 //--------------------------------------------------------------------------------------------------------
@@ -272,7 +298,7 @@ TEST_F(data_pool_service_test_init, test_data_pool_service_setup__sd_event_sourc
 	sd_event *event = (sd_event *)(0xaaff);
 
 	// clean global
-	memset(&g_packet,0,sizeof(g_packet));
+	memset(&g_packet_header,0,sizeof(g_packet_header));
 	// test static config set
 	memcpy(&g_config,&g_config_a,sizeof(g_config_a));
 
@@ -295,8 +321,8 @@ TEST_F(data_pool_service_test_init, test_data_pool_service_setup__sd_event_sourc
 
 	ret = data_pool_service_setup(event, &dp);
 	ASSERT_EQ(-1, ret);
-	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKETHEADER_MAGIC, g_packet.header.magic);
-	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKET_VERSION_V1, g_packet.header.version);
+	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKETHEADER_MAGIC, g_packet_header.magic);
+	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKET_VERSION_V1, g_packet_header.version);
 
 }
 //--------------------------------------------------------------------------------------------------------
@@ -307,7 +333,7 @@ TEST_F(data_pool_service_test_init, test_data_pool_service_setup__sd_event_now_e
 	sd_event *event = (sd_event *)(0xaaff);
 
 	// clean global
-	memset(&g_packet,0,sizeof(g_packet));
+	memset(&g_packet_header,0,sizeof(g_packet_header));
 	// test static config set
 	memcpy(&g_config,&g_config_a,sizeof(g_config_a));
 
@@ -330,8 +356,8 @@ TEST_F(data_pool_service_test_init, test_data_pool_service_setup__sd_event_now_e
 
 	ret = data_pool_service_setup(event, &dp);
 	ASSERT_EQ(-1, ret);
-	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKETHEADER_MAGIC, g_packet.header.magic);
-	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKET_VERSION_V1, g_packet.header.version);
+	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKETHEADER_MAGIC, g_packet_header.magic);
+	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKET_VERSION_V1, g_packet_header.version);
 
 }
 //--------------------------------------------------------------------------------------------------------
@@ -342,7 +368,7 @@ TEST_F(data_pool_service_test_init, test_data_pool_service_setup__sd_event_add_t
 	sd_event *event = (sd_event *)(0xaaff);
 
 	// clean global
-	memset(&g_packet,0,sizeof(g_packet));
+	memset(&g_packet_header,0,sizeof(g_packet_header));
 	// test static config set
 	memcpy(&g_config,&g_config_a,sizeof(g_config_a));
 
@@ -367,8 +393,8 @@ TEST_F(data_pool_service_test_init, test_data_pool_service_setup__sd_event_add_t
 
 	ret = data_pool_service_setup(event, &dp);
 	ASSERT_EQ(-1, ret);
-	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKETHEADER_MAGIC, g_packet.header.magic);
-	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKET_VERSION_V1, g_packet.header.version);
+	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKETHEADER_MAGIC, g_packet_header.magic);
+	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKET_VERSION_V1, g_packet_header.version);
 
 }
 //--------------------------------------------------------------------------------------------------------
@@ -379,7 +405,7 @@ TEST_F(data_pool_service_test_init, test_data_pool_service_setup__sd_event_sourc
 	sd_event *event = (sd_event *)(0xaaff);
 
 	// clean global
-	memset(&g_packet,0,sizeof(g_packet));
+	memset(&g_packet_header,0,sizeof(g_packet_header));
 	// test static config set
 	memcpy(&g_config,&g_config_a,sizeof(g_config_a));
 
@@ -410,8 +436,8 @@ TEST_F(data_pool_service_test_init, test_data_pool_service_setup__sd_event_sourc
 
 	ret = data_pool_service_setup(event, &dp);
 	ASSERT_EQ(-1, ret);
-	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKETHEADER_MAGIC, g_packet.header.magic);
-	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKET_VERSION_V1, g_packet.header.version);
+	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKETHEADER_MAGIC, g_packet_header.magic);
+	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKET_VERSION_V1, g_packet_header.version);
 
 }
 //--------------------------------------------------------------------------------------------------------
@@ -422,7 +448,7 @@ TEST_F(data_pool_service_test_init, test_data_pool_service_setup__success)
 	sd_event *event = (sd_event *)(0xaaff);
 
 	// clean global
-	memset(&g_packet,0,sizeof(g_packet));
+	memset(&g_packet_header,0,sizeof(g_packet_header));
 	// test static config set
 	memcpy(&g_config,&g_config_a,sizeof(g_config_a));
 
@@ -450,8 +476,8 @@ TEST_F(data_pool_service_test_init, test_data_pool_service_setup__success)
 
 	ret = data_pool_service_setup(event, &dp);
 	ASSERT_EQ(0, ret);
-	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKETHEADER_MAGIC, g_packet.header.magic);
-	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKET_VERSION_V1, g_packet.header.version);
+	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKETHEADER_MAGIC, g_packet_header.magic);
+	ASSERT_EQ(AGLCLUSTER_SERVICE_PACKET_VERSION_V1, g_packet_header.version);
 	
 
 	EXPECT_CALL(lsm, sd_event_source_disable_unref(_))
