@@ -254,7 +254,7 @@ static int can_handler_986(uint32_t can_id, uint8_t *payload, size_t data_length
 
 	//SG_ PT_RightTurnOn : 2|1@1+ (1,0) [0|1] "" Vector_XXX
 	{
-		uint8_t tmp = payload[0] & 0x03U;
+		uint8_t tmp = payload[0] & 0x04U;
 
 		if (tmp != 0) {
 			data_pool_set_turn_r(IC_HMI_ON);
