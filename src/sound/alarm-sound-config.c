@@ -46,11 +46,13 @@ static int mid_alarm(void)
 	{	// Engine, Brake, Airbag alarm
 		int32_t abs = -1;
 		int32_t eps = -1;
+		int32_t esp = -1;
 
 		abs = data_pool_get_abs();
 		eps = data_pool_get_eps();
+		esp = data_pool_get_esp_off();
 		if ((abs == IC_HMI_ON) || (eps == IC_HMI_ON) 
-			) {
+			(esp == IC_HMI_ON)) {
 			result = 1;	// Need alarm sound.
 		}
 	}
