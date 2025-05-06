@@ -1,49 +1,16 @@
 #include <alsa/asoundlib.h>
-#include <incbin.h>
-#include <alarm-sound.h>
+#include "incbin.h"
+#include "alarm-sound-config.h"
+#include "alarm-sound.h"
 #include <pthread.h>
 #include <time.h>
 
-#include "data-pool.h"
+#include <data-pool.h>
 
 // Worker state
 #define ALARM_SOUND_WORKER_CREATE		(0x10U)
 #define ALARM_SOUND_WORKER_RUN			(0x80U)
 #define ALARM_SOUND_WORKER_END			(0xa0U)
-
-typedef int (*alarm_sound_judge_func_t)(void);
-struct s_alarm_sound_service_config {
-	unsigned int priority;
-	unsigned int sound_index;
-	alarm_sound_judge_func_t func; 
-};
-
-static int seatbelt_alarm(void)
-{
-	int result = 0;	// Don't need alarm sound.
-	int32_t seatbelt = -1;
-	uint32_t speed_value = 0;
-	const uint32_t speed_threshold = 1000;	//10km/h
-
-	seatbelt = data_pool_get_seatbelt();
-	speed_value = data_pool_get_speed_analog_val();
-
-	if (speed_value >= speed_threshold) {
-		if (seatbelt == IC_HMI_ON) {
-			result = 1;	// Need alarm sound.
-		}
-	}
-
-	return result;
-}
-
-static const struct s_alarm_sound_service_config alarm_sound_service_config[] = {
-	[0] = {
-		.priority = 1,
-		.sound_index = 0,
-		.func = seatbelt_alarm,
-	},
-};
 
 #define ALARM_SOUND_TABLES		(3)
 typedef struct s_sound_table {
@@ -80,15 +47,17 @@ static int alarm_sound_judge(void)
 	int result = -1;
 	unsigned int priority = 0;
 	unsigned int sound_index = 0;
-	
-	for(size_t i=0; i < (sizeof(alarm_sound_service_config) / sizeof(struct s_alarm_sound_service_config)); i++) {
-		const struct s_alarm_sound_service_config *config = &alarm_sound_service_config[i];
+	const struct s_alarm_sound_service_config *config = NULL;
+	size_t config_num = 0;
 
-		int ret = config->func();
+	get_alarm_sound_service_config(&config, &config_num);
+
+	for(size_t i=0; i < config_num; i++) {
+		int ret = config[i].func();
 		if (ret == 1) {
-			if (priority < config->priority) {
-				priority = config->priority;
-				sound_index = config->sound_index;
+			if (priority < config[i].priority) {
+				priority = config[i].priority;
+				sound_index = config[i].sound_index;
 			}
 		}
 	}
@@ -114,7 +83,6 @@ static void alarm_wait(void)
 static void *alarm_sound_worker_thread(void* arg)
 {
 	int ret = -1;
-	unsigned int i;
 	snd_pcm_t *pcm_handle = NULL;
 	alarm_sound_service_handle handle = (alarm_sound_service_handle)arg;
 
@@ -185,7 +153,7 @@ int alarm_sound_service_setup(alarm_sound_service_handle *handle)
 
 	p = (struct s_alarm_sound_service*)malloc(sizeof(struct s_alarm_sound_service));
 	if (p == NULL) {
-		result -1;
+		result = -1;
 		goto error_return;
 	}
 
@@ -193,7 +161,7 @@ int alarm_sound_service_setup(alarm_sound_service_handle *handle)
 
 	ret = pthread_create(&p->worker_thread, NULL, alarm_sound_worker_thread, p);
 	if (ret < 0) {
-		result -2;
+		result = -2;
 		goto error_return;
 	}
 
