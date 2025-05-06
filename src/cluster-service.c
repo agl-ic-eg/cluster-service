@@ -67,7 +67,7 @@ static int get_command_line_options(int argc, char *argv[])
 			result = 0;
 #ifdef DATA_SOURCE_FAKE
 		} else if (ret == 20) {
-			g_options.data_source_config.demo = 0;
+			g_options.data_source_config.demo = 1;
 			result = 0;
 #endif //#ifdef DATA_SOURCE_FAKE
 #ifdef DATA_SOURCE_SOCKET_CAN
