@@ -7,6 +7,7 @@ noinst_LIBRARIES = \
 
 libalarm_sound_a_SOURCES = \
 	alarm-sound.c \
+	alarm-sound-config.c \
 	incbin.c
 
 # C compiler options
