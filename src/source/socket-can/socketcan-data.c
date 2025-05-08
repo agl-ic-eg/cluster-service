@@ -2,6 +2,25 @@
 #include "socketcan-data.h"
 #include "data-pool.h"
 
+static int can_handler_1001(uint32_t can_id, uint8_t *payload, size_t data_length)
+{
+	// SG_ PT_VehicleAvgSpeed : 7|15@0+ (0.015625,0) [0|511.984375] "km/h" Vector_XXX
+	{
+		uint32_t tmp = 0;
+		tmp = (((uint32_t)payload[0] & 0xffU) * 128) + (((uint32_t)payload[1] & 0xfeU) / 2);
+
+		// 1 / (2^6) = 0.015625
+		uint32_t val = (tmp * 100U) / 64U;
+		if (tmp >= 0x7530U) {
+			val = 0x7530U;
+		}
+
+		data_pool_set_speed_analog_val(val);
+	}
+
+	return 0;
+}
+
 static int can_handler_180(uint32_t can_id, uint8_t *payload, size_t data_length)
 {
 	//SG_ MotorRPM : 32|16@1- (0.5,0) [-16000|16000] "RPM"  EVPWR
@@ -21,22 +40,6 @@ static int can_handler_180(uint32_t can_id, uint8_t *payload, size_t data_length
 			val = (uint32_t)(tmp / 2);
 		}
 		data_pool_set_tacho_analog_val(val);
-	}
-
-	//SG_ VehicleSpeed : 16|12@1+ (0.05,0) [0|204.75] "km/h" EVPWR
-	{
-		int32_t tmp = 0;
-		tmp = (((int32_t)payload[3] & 0x0fU) * 256) + ((int32_t)payload[2]);
-
-		uint32_t val = 0;
-		if (tmp < 0) {
-			val = 0U;
-		} else if ((tmp / 2) > 30000) {
-			val = 30000;
-		} else {
-			val = (uint32_t)(tmp * 5);
-		}
-		data_pool_set_speed_analog_val(val);
 	}
 
 	//SG_ BrakePedal : 15|1@1+ (1,0) [0|0] "" EVPWR
@@ -267,6 +270,10 @@ static int can_handler_986(uint32_t can_id, uint8_t *payload, size_t data_length
 }
 
 static socketcan_data_handling_t socketcan_data_handling_table[] = {
+	{
+		.can_id = 1001,
+		.handler = can_handler_1001,
+	},
 	{
 		.can_id = 180,
 		.handler = can_handler_180,
