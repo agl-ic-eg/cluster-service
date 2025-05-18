@@ -21,6 +21,21 @@ struct s_agl_cluster_data_pool {
 static struct s_agl_cluster_data_pool g_agl_cluster_data_pool = {
 	.notify = NULL,
 	.data_pool_lock = PTHREAD_ERRORCHECK_MUTEX_INITIALIZER_NP,
+	// Data pool non zero initial value
+	.data = {
+		.frontRightSeatbelt = IC_HMI_ON,
+		.frontCenterSeatbelt = IC_HMI_ON,
+		.frontLeftSeatbelt = IC_HMI_ON,
+		.mid1RightSeatbelt = IC_HMI_ON,
+		.mid1CenterSeatbelt = IC_HMI_ON,
+		.mid1LeftSeatbelt = IC_HMI_ON,
+		.mid2RightSeatbelt = IC_HMI_ON,
+		.mid2CenterSeatbelt = IC_HMI_ON,
+		.mid2LeftSeatbelt = IC_HMI_ON,
+		.rearRightSeatbelt = IC_HMI_ON,
+		.rearCenterSeatbelt = IC_HMI_ON,
+		.rearLeftSeatbelt = IC_HMI_ON,
+	}
 };
 
 static uint64_t data_pool_check_change_v1(struct S_AGLCLUSTER_SERVICE_DATA_V1 *data);
@@ -309,14 +324,63 @@ int32_t data_pool_get_brake(void)
 }
 
 /**
- * Data pool setter for Seatbelt
+ * Data pool updater for Seatbelt
  *
- * @param [in]	val		ON/OFF for Seatbelt Telltale
  * @return void
  */
-void data_pool_set_seatbelt(int32_t val)
+static void data_pool_update_seatbelt(void)
 {
-	g_agl_cluster_data_pool.data.seatbelt = val;
+	int32_t value = IC_HMI_OFF;
+
+	if (g_agl_cluster_data_pool.data.frontRightSeatbelt == IC_HMI_OFF) {
+		value = IC_HMI_ON;
+	}
+
+	if (g_agl_cluster_data_pool.data.frontCenterSeatbelt == IC_HMI_OFF) {
+		value = IC_HMI_ON;
+	}
+
+	if (g_agl_cluster_data_pool.data.frontLeftSeatbelt == IC_HMI_OFF) {
+		value = IC_HMI_ON;
+	}
+
+	if (g_agl_cluster_data_pool.data.mid1RightSeatbelt == IC_HMI_OFF) {
+		value = IC_HMI_ON;
+	}
+
+	if (g_agl_cluster_data_pool.data.mid1CenterSeatbelt == IC_HMI_OFF) {
+		value = IC_HMI_ON;
+	}
+
+	if (g_agl_cluster_data_pool.data.mid1LeftSeatbelt == IC_HMI_OFF) {
+		value = IC_HMI_ON;
+	}
+
+	if (g_agl_cluster_data_pool.data.mid2RightSeatbelt == IC_HMI_OFF) {
+		value = IC_HMI_ON;
+	}
+
+	if (g_agl_cluster_data_pool.data.mid2CenterSeatbelt == IC_HMI_OFF) {
+		value = IC_HMI_ON;
+	}
+
+	if (g_agl_cluster_data_pool.data.mid2LeftSeatbelt == IC_HMI_OFF) {
+		value = IC_HMI_ON;
+	}
+
+	if (g_agl_cluster_data_pool.data.rearRightSeatbelt == IC_HMI_OFF) {
+		value = IC_HMI_ON;
+	}
+
+	if (g_agl_cluster_data_pool.data.rearCenterSeatbelt == IC_HMI_OFF) {
+		value = IC_HMI_ON;
+	}
+
+	if (g_agl_cluster_data_pool.data.rearLeftSeatbelt == IC_HMI_OFF) {
+		value = IC_HMI_ON;
+	}
+
+	g_agl_cluster_data_pool.data.seatbelt = value;
 }
 /**
  * Data pool getter for Seatbelt
@@ -339,6 +403,7 @@ int32_t data_pool_get_seatbelt(void)
 void data_pool_set_front_right_seatbelt(int32_t val)
 {
 	g_agl_cluster_data_pool.data.frontRightSeatbelt = val;
+	data_pool_update_seatbelt();
 }
 /**
  * Data pool getter for Seatbelt at Front Right
@@ -361,6 +426,7 @@ int32_t data_pool_get_front_right_seatbelt(void)
 void data_pool_set_front_center_seatbelt(int32_t val)
 {
 	g_agl_cluster_data_pool.data.frontCenterSeatbelt = val;
+	data_pool_update_seatbelt();
 }
 /**
  * Data pool getter for Seatbelt at Front Center
@@ -383,6 +449,7 @@ int32_t data_pool_get_front_center_seatbelt(void)
 void data_pool_set_front_left_seatbelt(int32_t val)
 {
 	g_agl_cluster_data_pool.data.frontLeftSeatbelt = val;
+	data_pool_update_seatbelt();
 }
 /**
  * Data pool getter for Seatbelt at Front Left
@@ -405,6 +472,7 @@ int32_t data_pool_get_front_left_seatbelt(void)
 void data_pool_set_mid1_right_seatbelt(int32_t val)
 {
 	g_agl_cluster_data_pool.data.mid1RightSeatbelt = val;
+	data_pool_update_seatbelt();
 }
 /**
  * Data pool getter for Seatbelt at Mid1 Right
@@ -427,6 +495,7 @@ int32_t data_pool_get_mid1_right_seatbelt(void)
 void data_pool_set_mid1_center_seatbelt(int32_t val)
 {
 	g_agl_cluster_data_pool.data.mid1CenterSeatbelt = val;
+	data_pool_update_seatbelt();
 }
 /**
  * Data pool getter for Seatbelt at Mid1 Center
@@ -449,6 +518,7 @@ int32_t data_pool_get_mid1_center_seatbelt(void)
 void data_pool_set_mid1_left_seatbelt(int32_t val)
 {
 	g_agl_cluster_data_pool.data.mid1LeftSeatbelt = val;
+	data_pool_update_seatbelt();
 }
 /**
  * Data pool getter for Seatbelt at Mid1 Left
@@ -471,6 +541,7 @@ int32_t data_pool_get_mid1_left_seatbelt(void)
 void data_pool_set_mid2_right_seatbelt(int32_t val)
 {
 	g_agl_cluster_data_pool.data.mid2RightSeatbelt = val;
+	data_pool_update_seatbelt();
 }
 /**
  * Data pool getter for Seatbelt at Mid2 Right
@@ -493,6 +564,7 @@ int32_t data_pool_get_mid2_right_seatbelt(void)
 void data_pool_set_mid2_center_seatbelt(int32_t val)
 {
 	g_agl_cluster_data_pool.data.mid2CenterSeatbelt = val;
+	data_pool_update_seatbelt();
 }
 /**
  * Data pool getter for Seatbelt at Mid2 Center
@@ -515,6 +587,7 @@ int32_t data_pool_get_mid2_center_seatbelt(void)
 void data_pool_set_mid2_left_seatbelt(int32_t val)
 {
 	g_agl_cluster_data_pool.data.mid2LeftSeatbelt = val;
+	data_pool_update_seatbelt();
 }
 /**
  * Data pool getter for Seatbelt at Mid2 Left
@@ -537,6 +610,7 @@ int32_t data_pool_get_mid2_left_seatbelt(void)
 void data_pool_set_rear_right_seatbelt(int32_t val)
 {
 	g_agl_cluster_data_pool.data.rearRightSeatbelt = val;
+	data_pool_update_seatbelt();
 }
 /**
  * Data pool getter for Seatbelt at Rear Right
@@ -559,6 +633,7 @@ int32_t data_pool_get_rear_right_seatbelt(void)
 void data_pool_set_rear_center_seatbelt(int32_t val)
 {
 	g_agl_cluster_data_pool.data.rearCenterSeatbelt = val;
+	data_pool_update_seatbelt();
 }
 /**
  * Data pool getter for Seatbelt at Rear Center
@@ -581,6 +656,7 @@ int32_t data_pool_get_rear_center_seatbelt(void)
 void data_pool_set_rear_left_seatbelt(int32_t val)
 {
 	g_agl_cluster_data_pool.data.rearLeftSeatbelt = val;
+	data_pool_update_seatbelt();
 }
 /**
  * Data pool getter for Seatbelt at Rear Left
@@ -617,14 +693,39 @@ int32_t data_pool_get_high_beam(void)
 }
 
 /**
- * Data pool setter for Door
+ * Data pool updater for Door
  *
- * @param [in]	val		ON/OFF for Door Telltale
  * @return void
  */
-void data_pool_set_door(int32_t val)
+static void data_pool_update_door(void)
 {
-	g_agl_cluster_data_pool.data.door = val;
+	int32_t value = IC_HMI_OFF;
+
+	if (g_agl_cluster_data_pool.data.frontRightDoor == IC_HMI_ON) {
+		value = IC_HMI_ON;
+	}
+
+	if (g_agl_cluster_data_pool.data.frontLeftDoor == IC_HMI_ON) {
+		value = IC_HMI_ON;
+	}
+
+	if (g_agl_cluster_data_pool.data.rearRightDoor == IC_HMI_ON) {
+		value = IC_HMI_ON;
+	}
+
+	if (g_agl_cluster_data_pool.data.rearLeftDoor == IC_HMI_ON) {
+		value = IC_HMI_ON;
+	}
+
+	if (g_agl_cluster_data_pool.data.trunkDoor == IC_HMI_ON) {
+		value = IC_HMI_ON;
+	}
+
+	if (g_agl_cluster_data_pool.data.hoodDoor == IC_HMI_ON) {
+		value = IC_HMI_ON;
+	}
+
+	g_agl_cluster_data_pool.data.door = value;
 }
 /**
  * Data pool getter for Door
@@ -647,6 +748,7 @@ int32_t data_pool_get_door(void)
 void data_pool_set_front_right_door(int32_t val)
 {
 	g_agl_cluster_data_pool.data.frontRightDoor = val;
+	data_pool_update_door();
 }
 /**
  * Data pool getter for Door at Front Right
@@ -669,6 +771,7 @@ int32_t data_pool_get_front_right_door(void)
 void data_pool_set_front_left_door(int32_t val)
 {
 	g_agl_cluster_data_pool.data.frontLeftDoor = val;
+	data_pool_update_door();
 }
 /**
  * Data pool getter for Door at Front Left
@@ -691,6 +794,7 @@ int32_t data_pool_get_front_left_door(void)
 void data_pool_set_rear_right_door(int32_t val)
 {
 	g_agl_cluster_data_pool.data.rearRightDoor = val;
+	data_pool_update_door();
 }
 /**
  * Data pool getter for Door at Rear Right
@@ -713,6 +817,7 @@ int32_t data_pool_get_rear_right_door(void)
 void data_pool_set_rear_left_door(int32_t val)
 {
 	g_agl_cluster_data_pool.data.rearLeftDoor = val;
+	data_pool_update_door();
 }
 /**
  * Data pool getter for Door at Rear Left
@@ -735,6 +840,7 @@ int32_t data_pool_get_rear_left_door(void)
 void data_pool_set_trunk_door(int32_t val)
 {
 	g_agl_cluster_data_pool.data.trunkDoor = val;
+	data_pool_update_door();
 }
 /**
  * Data pool getter for Trunk Door
@@ -757,6 +863,7 @@ int32_t data_pool_get_trunk_door(void)
 void data_pool_set_hood_door(int32_t val)
 {
 	g_agl_cluster_data_pool.data.hoodDoor = val;
+	data_pool_update_door();
 }
 /**
  * Data pool getter for Hood Door

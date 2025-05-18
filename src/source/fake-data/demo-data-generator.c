@@ -7,6 +7,7 @@
 
 #include "demo-data-generator.h"
 #include "data-pool.h"
+//#include "alarm-sound.h"
 
 #include <errno.h>
 #include <stdio.h>
@@ -24,7 +25,10 @@ static struct s_demo_data_timer g_demo_timer;
 
 const uint64_t g_demo_data_update_interval = 10 * 1000; // usec
 
-static int g_demo_gear = 0;
+#include "demo-data.c"
+
+static int g_table_index = 0;
+static int g_turn = 0;
 
 #include "demo-data.c"
 
@@ -116,7 +120,6 @@ static void do_demo(void)
 
 		if (((g_demo_timer.demo_count / 500) % 5) == 0) {
 			data_pool_set_brake(IC_HMI_ON);
-			data_pool_set_door(IC_HMI_ON);
 			data_pool_set_front_right_door(IC_HMI_ON);
 			data_pool_set_front_left_door(IC_HMI_ON);
 			data_pool_set_rear_right_door(IC_HMI_ON);
@@ -125,7 +128,6 @@ static void do_demo(void)
 			data_pool_set_hood_door(IC_HMI_ON);
 		} else {
 			data_pool_set_brake(IC_HMI_OFF);
-			data_pool_set_door(IC_HMI_OFF);
 			data_pool_set_front_right_door(IC_HMI_OFF);
 			data_pool_set_front_left_door(IC_HMI_OFF);
 			data_pool_set_rear_right_door(IC_HMI_OFF);
@@ -171,7 +173,6 @@ static void do_demo(void)
 			data_pool_set_auto_stop_fail(IC_HMI_OFF);
 			data_pool_set_parking_lights(IC_HMI_OFF);
 		}
-
 
 		if (((g_demo_timer.demo_count / 500) % 5) == 3) {
 			data_pool_set_front_fog(IC_HMI_ON);

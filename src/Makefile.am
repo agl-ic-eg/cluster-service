@@ -1,21 +1,23 @@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I m4 ${ACLOCAL_FLAGS}
 
-bin_PROGRAMS = cluster_service 
+bin_PROGRAMS = cluster_service
 
 cluster_service_SOURCES = \
+	source/data-source.c \
 	data-pool-service.c \
 	cluster-service-util.c \
-	cluster-service.c \
-	demo-data-generator.c
+	cluster-service.c
 
 # options
 # Additional library
 cluster_service_LDADD = \
 	$(top_builddir)/lib/libcluster_service_common.a \
 	$(top_builddir)/lib/libcluster_service_static_configurator.a \
+	$(top_builddir)/src/sound/libalarm_sound.a \
 	-lrt -lpthread \
-	@LIBSYSTEMD_LIBS@ 
+	@LIBSYSTEMD_LIBS@ \
+	@LIBALSA_LIBS@
 
 # C compiler options
 cluster_service_CFLAGS = \
@@ -23,11 +25,11 @@ cluster_service_CFLAGS = \
 	-I$(top_srcdir)/lib \
 	-I$(top_srcdir)/include \
 	@LIBSYSTEMD_CFLAGS@ \
+	@LIBALSA_CFLAGS@ \
 	-D_GNU_SOURCE
 
-# Linker options
+# Linker optionscluster_service
 cluster_service_LDFLAGS = 
-
 
 # configure option 
 if ENABLE_ADDRESS_SANITIZER
@@ -38,11 +40,18 @@ if ENABLE_GCOV
 CFLAGS   += -coverage
 endif
 
-
-#
-#if ENABLE_PRINTFDEBUG
-#exsample_CFLAGS   += -D_PRINTF_DEBUG_
-#exsample_CXXFLAGS += -D_PRINTF_DEBUG_
-#endif
-
 CLEANFILES = *.gcda *.gcno
+
+SUBDIRS = sound
+
+if DATA_SOURCE_FAKE
+SUBDIRS += source/fake-data
+CFLAGS += -DDATA_SOURCE_FAKE
+cluster_service_LDADD += source/fake-data/libsource_fake_data.a
+endif
+
+if DATA_SOURCE_SOCKET_CAN
+SUBDIRS += source/socket-can
+CFLAGS += -DDATA_SOURCE_SOCKET_CAN
+cluster_service_LDADD += source/socket-can/libsource_socketcan.a
+endif

@@ -44,6 +44,9 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__tu
 	onoffval = getTurnR();
 	ASSERT_EQ(1, onoffval);
 
+	onoffval = getTurnL();
+	ASSERT_EQ(0, onoffval);
+
 	g_agl_cluster_data_pool.data.turnR = 0;
 	ret = memcmp(&g_agl_cluster_data_pool.data, &zerodata, sizeof(zerodata));
 	ASSERT_EQ(0, ret);
@@ -61,6 +64,8 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__tu
 	onoffval = getTurnR();
 	ASSERT_EQ(0, onoffval);
 
+	onoffval = getTurnL();
+	ASSERT_EQ(0, onoffval);
 }
 //--------------------------------------------------------------------------------------------------------
 TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__turn_l)
@@ -83,6 +88,9 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__tu
 	onoffval = getTurnL();
 	ASSERT_EQ(1, onoffval);
 
+	onoffval = getTurnR();
+	ASSERT_EQ(0, onoffval);
+
 	g_agl_cluster_data_pool.data.turnL = 0;
 	ret = memcmp(&g_agl_cluster_data_pool.data, &zerodata, sizeof(zerodata));
 	ASSERT_EQ(0, ret);
@@ -98,6 +106,9 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__tu
 	ASSERT_EQ(0, val);
 
 	onoffval = getTurnL();
+	ASSERT_EQ(0, onoffval);
+
+	onoffval = getTurnR();
 	ASSERT_EQ(0, onoffval);
 }
 //--------------------------------------------------------------------------------------------------------
@@ -150,8 +161,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__se
 	val = data_pool_get_seatbelt();
 	ASSERT_EQ(0, val);
 	
-	data_pool_set_seatbelt(1);
-	ASSERT_EQ(1, g_agl_cluster_data_pool.data.seatbelt);
+	g_agl_cluster_data_pool.data.seatbelt = 1;
 
 	val = data_pool_get_seatbelt();
 	ASSERT_EQ(1, val);
@@ -167,8 +177,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__se
 	val = data_pool_get_seatbelt();
 	ASSERT_EQ(1, val);
 
-	data_pool_set_seatbelt(0);
-	ASSERT_EQ(0, g_agl_cluster_data_pool.data.seatbelt);
+	g_agl_cluster_data_pool.data.seatbelt = 0;
 
 	val = data_pool_get_seatbelt();
 	ASSERT_EQ(0, val);
@@ -198,6 +207,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__fr
 	ASSERT_EQ(1, onoffval);
 
 	g_agl_cluster_data_pool.data.frontRightSeatbelt = 0;
+	g_agl_cluster_data_pool.data.seatbelt = 0;
 	ret = memcmp(&g_agl_cluster_data_pool.data, &zerodata, sizeof(zerodata));
 	ASSERT_EQ(0, ret);
 
@@ -236,6 +246,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__fr
 	ASSERT_EQ(1, onoffval);
 
 	g_agl_cluster_data_pool.data.frontCenterSeatbelt = 0;
+	g_agl_cluster_data_pool.data.seatbelt = 0;
 	ret = memcmp(&g_agl_cluster_data_pool.data, &zerodata, sizeof(zerodata));
 	ASSERT_EQ(0, ret);
 
@@ -274,6 +285,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__fr
 	ASSERT_EQ(1, onoffval);
 
 	g_agl_cluster_data_pool.data.frontLeftSeatbelt = 0;
+	g_agl_cluster_data_pool.data.seatbelt = 0;
 	ret = memcmp(&g_agl_cluster_data_pool.data, &zerodata, sizeof(zerodata));
 	ASSERT_EQ(0, ret);
 
@@ -312,6 +324,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__mi
 	ASSERT_EQ(1, onoffval);
 
 	g_agl_cluster_data_pool.data.mid1RightSeatbelt = 0;
+	g_agl_cluster_data_pool.data.seatbelt = 0;
 	ret = memcmp(&g_agl_cluster_data_pool.data, &zerodata, sizeof(zerodata));
 	ASSERT_EQ(0, ret);
 
@@ -350,6 +363,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__mi
 	ASSERT_EQ(1, onoffval);
 
 	g_agl_cluster_data_pool.data.mid1CenterSeatbelt = 0;
+	g_agl_cluster_data_pool.data.seatbelt = 0;
 	ret = memcmp(&g_agl_cluster_data_pool.data, &zerodata, sizeof(zerodata));
 	ASSERT_EQ(0, ret);
 
@@ -388,6 +402,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__mi
 	ASSERT_EQ(1, onoffval);
 
 	g_agl_cluster_data_pool.data.mid1LeftSeatbelt = 0;
+	g_agl_cluster_data_pool.data.seatbelt = 0;
 	ret = memcmp(&g_agl_cluster_data_pool.data, &zerodata, sizeof(zerodata));
 	ASSERT_EQ(0, ret);
 
@@ -426,6 +441,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__mi
 	ASSERT_EQ(1, onoffval);
 
 	g_agl_cluster_data_pool.data.mid2RightSeatbelt = 0;
+	g_agl_cluster_data_pool.data.seatbelt = 0;
 	ret = memcmp(&g_agl_cluster_data_pool.data, &zerodata, sizeof(zerodata));
 	ASSERT_EQ(0, ret);
 
@@ -464,6 +480,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__mi
 	ASSERT_EQ(1, onoffval);
 
 	g_agl_cluster_data_pool.data.mid2CenterSeatbelt = 0;
+	g_agl_cluster_data_pool.data.seatbelt = 0;
 	ret = memcmp(&g_agl_cluster_data_pool.data, &zerodata, sizeof(zerodata));
 	ASSERT_EQ(0, ret);
 
@@ -502,6 +519,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__mi
 	ASSERT_EQ(1, val);
 
 	g_agl_cluster_data_pool.data.mid2LeftSeatbelt = 0;
+	g_agl_cluster_data_pool.data.seatbelt = 0;
 	ret = memcmp(&g_agl_cluster_data_pool.data, &zerodata, sizeof(zerodata));
 	ASSERT_EQ(0, ret);
 
@@ -540,6 +558,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__re
 	ASSERT_EQ(1, onoffval);
 
 	g_agl_cluster_data_pool.data.rearRightSeatbelt = 0;
+	g_agl_cluster_data_pool.data.seatbelt = 0;
 	ret = memcmp(&g_agl_cluster_data_pool.data, &zerodata, sizeof(zerodata));
 	ASSERT_EQ(0, ret);
 
@@ -578,6 +597,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__re
 	ASSERT_EQ(1, onoffval);
 
 	g_agl_cluster_data_pool.data.rearCenterSeatbelt = 0;
+	g_agl_cluster_data_pool.data.seatbelt = 0;
 	ret = memcmp(&g_agl_cluster_data_pool.data, &zerodata, sizeof(zerodata));
 	ASSERT_EQ(0, ret);
 
@@ -616,6 +636,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__re
 	ASSERT_EQ(1, onoffval);
 
 	g_agl_cluster_data_pool.data.rearLeftSeatbelt = 0;
+	g_agl_cluster_data_pool.data.seatbelt = 0;
 	ret = memcmp(&g_agl_cluster_data_pool.data, &zerodata, sizeof(zerodata));
 	ASSERT_EQ(0, ret);
 
@@ -682,8 +703,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__do
 	val = data_pool_get_door();
 	ASSERT_EQ(0, val);
 	
-	data_pool_set_door(1);
-	ASSERT_EQ(1, g_agl_cluster_data_pool.data.door);
+	g_agl_cluster_data_pool.data.door = 1;
 
 	val = data_pool_get_door();
 	ASSERT_EQ(1, val);
@@ -699,8 +719,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__do
 	val = data_pool_get_door();
 	ASSERT_EQ(1, val);
 
-	data_pool_set_door(0);
-	ASSERT_EQ(0, g_agl_cluster_data_pool.data.door);
+	g_agl_cluster_data_pool.data.door = 0;
 
 	val = data_pool_get_door();
 	ASSERT_EQ(0, val);
@@ -730,6 +749,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__fr
 	ASSERT_EQ(1, onoffval);
 
 	g_agl_cluster_data_pool.data.frontRightDoor = 0;
+	g_agl_cluster_data_pool.data.door = 0;
 	ret = memcmp(&g_agl_cluster_data_pool.data, &zerodata, sizeof(zerodata));
 	ASSERT_EQ(0, ret);
 
@@ -768,6 +788,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__fr
 	ASSERT_EQ(1, onoffval);
 
 	g_agl_cluster_data_pool.data.frontLeftDoor = 0;
+	g_agl_cluster_data_pool.data.door = 0;
 	ret = memcmp(&g_agl_cluster_data_pool.data, &zerodata, sizeof(zerodata));
 	ASSERT_EQ(0, ret);
 
@@ -806,6 +827,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__re
 	ASSERT_EQ(1, onoffval);
 
 	g_agl_cluster_data_pool.data.rearRightDoor = 0;
+	g_agl_cluster_data_pool.data.door = 0;
 	ret = memcmp(&g_agl_cluster_data_pool.data, &zerodata, sizeof(zerodata));
 	ASSERT_EQ(0, ret);
 
@@ -844,6 +866,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__re
 	ASSERT_EQ(1, onoffval);
 
 	g_agl_cluster_data_pool.data.rearLeftDoor = 0;
+	g_agl_cluster_data_pool.data.door = 0;
 	ret = memcmp(&g_agl_cluster_data_pool.data, &zerodata, sizeof(zerodata));
 	ASSERT_EQ(0, ret);
 
@@ -882,6 +905,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__tr
 	ASSERT_EQ(1, val);
 
 	g_agl_cluster_data_pool.data.trunkDoor = 0;
+	g_agl_cluster_data_pool.data.door = 0;
 	ret = memcmp(&g_agl_cluster_data_pool.data, &zerodata, sizeof(zerodata));
 	ASSERT_EQ(0, ret);
 
@@ -920,6 +944,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_set_get_telltale__ho
 	ASSERT_EQ(1, onoffval);
 
 	g_agl_cluster_data_pool.data.hoodDoor = 0;
+	g_agl_cluster_data_pool.data.door = 0;
 	ret = memcmp(&g_agl_cluster_data_pool.data, &zerodata, sizeof(zerodata));
 	ASSERT_EQ(0, ret);
 
@@ -2220,7 +2245,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_check_change__1)
 	ASSERT_EQ(true, ret);
 
 	refsignals |= IC_HMI_TT_DOOR;
-	data_pool_set_door(1);
+	g_agl_cluster_data_pool.data.door = 1;
 	signals = data_pool_check_change_v1(&data);
 	ASSERT_EQ(refsignals, signals);
 	ret = notifyCheck(signals);
@@ -2234,7 +2259,7 @@ TEST_F(data_pool_test_set_get_telltale, test_data_pool_test_check_change__1)
 	ASSERT_EQ(true, ret);
 
 	refsignals |= IC_HMI_TT_SEATBELT;
-	data_pool_set_seatbelt(1);
+	g_agl_cluster_data_pool.data.seatbelt = 1;
 	signals = data_pool_check_change_v1(&data);
 	ASSERT_EQ(refsignals, signals);
 	ret = notifyCheck(signals);
