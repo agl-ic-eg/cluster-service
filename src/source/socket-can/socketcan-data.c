@@ -4,7 +4,7 @@
 
 static int can_handler_1001(uint32_t can_id, uint8_t *payload, size_t data_length)
 {
-	// SG_ PT_VehicleAvgSpeed : 7|15@0+ (0.015625,0) [0|511.984375] "km/h" Vector_XXX
+	// SG_ PT_VehicleSpeed : 7|15@0+ (0.015625,0) [0|511.984375] "km/h" Vector_XXX
 	{
 		uint32_t tmp = 0;
 		tmp = (((uint32_t)payload[0] & 0xffU) * 128) + (((uint32_t)payload[1] & 0xfeU) / 2);
@@ -21,30 +21,44 @@ static int can_handler_1001(uint32_t can_id, uint8_t *payload, size_t data_lengt
 	return 0;
 }
 
-static int can_handler_180(uint32_t can_id, uint8_t *payload, size_t data_length)
+static int can_handler_985(uint32_t can_id, uint8_t *payload, size_t data_length)
 {
-	//SG_ MotorRPM : 32|16@1- (0.5,0) [-16000|16000] "RPM"  EVPWR
+	// SG_ PT_FuelLevelLow : 55|1@1+ (1,0) [0|1] "" VCAR_SIGNAL
 	{
-		int32_t tmp = 0;
-		tmp = (((int32_t)payload[5] & 0x7fU) * 256) + ((int32_t)payload[4]);
-		if ((payload[5] & 0x80U) != 0) {
-			tmp = tmp * -1;
+		uint8_t tmp = 0;
+		tmp = (payload[6] & 0x80U);
+		if (tmp != 0) {
+			data_pool_set_fuel(IC_HMI_ON);
+		} else {
+			data_pool_set_fuel(IC_HMI_OFF);
+		}
+	}
+
+	// SG_ PT_EngineSpeed : 23|16@0+ (0.25,0) [0|0] "rpm" VCAR_SIGNAL
+	{
+		uint32_t tmp = 0;
+		tmp = (((uint32_t)payload[2] & 0xffU) * 256U) + ((uint32_t)payload[1] & 0xffU);
+
+		// 1 / (2^2) = 0.25
+		uint32_t val = (tmp * 100U) / 4U;
+		if (tmp >= 0x4E20U) {
+			val = 0x4E20U;
 		}
 
-		uint32_t val = 0;
-		if (tmp < 0) {
-			val = 0U;
-		} else if ((tmp / 2) > 20000) {
-			val = 20000U;
-		} else {
-			val = (uint32_t)(tmp / 2);
-		}
 		data_pool_set_tacho_analog_val(val);
 	}
 
-	//SG_ BrakePedal : 15|1@1+ (1,0) [0|0] "" EVPWR
+	// SG_ PT_FuelLevelPct : 8|8@1+ (0.392157,0) [0|0] "%" VCAR_SIGNAL
+	{
+		/* nop */
+	}
 
-	//SG_ Gear : 12|3@1+ (1,0) [0|7] "" EVPWR
+	return 0;
+}
+
+static int can_handler_180(uint32_t can_id, uint8_t *payload, size_t data_length)
+{
+	//SG_ EV_ShiftPosition : 12|3@0+ (1,0) [0|7] "" EVPWR
 	//VAL_ 180 Gear 7 "GEAR_SNA" 5 "GEAR_B" 4 "GEAR_D" 3 "GEAR_N" 2 "GEAR_R" 1 "GEAR_P" 0 "GEAR_INVALID" ;
 	{
 		uint8_t tmp = 0;
@@ -67,7 +81,7 @@ static int can_handler_180(uint32_t can_id, uint8_t *payload, size_t data_length
 		data_pool_set_gear_at_val(gear_val);
 	}
 
-	//SG_ MotorFaultLamp : 1|1@1+ (1,0) [0|1] "" EVPWR
+	//SG_ EV_MotorFaultLamp : 1|1@0+ (1,0) [0|1] "" EVPWR
 	{
 		uint8_t tmp = 0;
 		tmp = (payload[0] & 0x02U);
@@ -83,7 +97,7 @@ static int can_handler_180(uint32_t can_id, uint8_t *payload, size_t data_length
 
 static int can_handler_184(uint32_t can_id, uint8_t *payload, size_t data_length)
 {
-	// SG_ ESP_espOffLamp : 31|1@1+ (1,0) [0|1] ""  ESP
+	//  SG_ EspOffLamp : 31|1@0+ (1,0) [0|1] ""  ESP
 	{
 		uint8_t tmp = 0;
 		tmp = (payload[3] & 0x80U);
@@ -94,7 +108,7 @@ static int can_handler_184(uint32_t can_id, uint8_t *payload, size_t data_length
 		}
 	}
 
-	// SG_ ESP_absFaultLamp : 27|1@1+ (1,0) [0|1] ""  ESP
+	// SG_ AbsFaultLamp : 27|1@0+ (1,0) [0|1] ""  ESP
 	{
 		uint8_t tmp = 0;
 		tmp = (payload[3] & 0x08U);
@@ -105,7 +119,7 @@ static int can_handler_184(uint32_t can_id, uint8_t *payload, size_t data_length
 		}
 	}
 
-	// SG_ ESP_espFaultLamp : 6|1@1+ (1,0) [0|1] ""  ESP
+ 	// SG_ EspActLamp : 6|1@0+ (1,0) [0|1] ""  ESP
 	{
 		uint8_t tmp = 0;
 		tmp = (payload[0] & 0x40U);
@@ -114,16 +128,6 @@ static int can_handler_184(uint32_t can_id, uint8_t *payload, size_t data_length
 		} else {
 			data_pool_set_esp_act(IC_HMI_OFF);
 		}
-	}
-
-	// SG_ ESP_brakeLamp : 3|1@1+ (1,0) [0|1] ""  ESP
-	{
-		/* nop */
-	}
-
-	// SG_ ESP_absBrakeEvent : 2|1@1+ (1,0) [0|1] ""  ESP
-	{
-		/* nop */
 	}
 
 	return 0;
@@ -140,11 +144,6 @@ static int can_handler_192(uint32_t can_id, uint8_t *payload, size_t data_length
 		} else {
 			data_pool_set_eps(IC_HMI_OFF);
 		}
-	}
-
-	//SG_ EpsEnable : 0|1@1+ (1,0) [0|1] ""  EPS
-	{
-		/* nop */
 	}
 
 	return 0;
@@ -275,6 +274,14 @@ static socketcan_data_handling_t socketcan_data_handling_table[] = {
 		.handler = can_handler_1001,
 	},
 	{
+		.can_id = 985,
+		.handler = can_handler_985,
+	},
+	{
+		.can_id = 986,
+		.handler = can_handler_986,
+	},
+	{
 		.can_id = 180,
 		.handler = can_handler_180,
 	},
@@ -293,10 +300,6 @@ static socketcan_data_handling_t socketcan_data_handling_table[] = {
 	{
 		.can_id = 143,
 		.handler = can_handler_143,
-	},
-	{
-		.can_id = 986,
-		.handler = can_handler_986,
 	},
 };
 
