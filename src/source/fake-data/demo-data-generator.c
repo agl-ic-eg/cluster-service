@@ -30,11 +30,6 @@ const uint64_t g_demo_data_update_interval = 10 * 1000; // usec
 static int g_table_index = 0;
 static int g_turn = 0;
 
-#include "demo-data.c"
-
-static int g_table_index = 0;
-static int g_turn = 0;
-
 static void do_demo(void)
 {
 	uint32_t speed_val = g_sim_data_tbl[g_table_index].speed;
