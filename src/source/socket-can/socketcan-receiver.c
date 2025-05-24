@@ -47,63 +47,7 @@ static void do_can(struct can_frame *can_frame_data, socketcan_client_handle_sde
 			}
 		}
 	}
-/*
-	int telltale_on = 0;
-
-	switch(can_frame_data->can_id) {
-	case 0x168 :
-		{
-			if ((can_frame_data->data[0] & 0x10U) == 0) {
-				// off
-				data_pool_set_low_battery(IC_HMI_OFF);
-			} else {
-				// on
-				data_pool_set_low_battery(IC_HMI_ON);
-				(void) set_command_alarm_sound_worker(scp->alarm_sound, ALARM_SOUND_WORKER_PLAY0);
-				telltale_on = 1;
-			}
-			break;
-		}
-	case 0x484 :
-		{
-			if ((can_frame_data->data[1] & 0x08U) == 0) {
-				// off
-				data_pool_set_engine(IC_HMI_OFF);
-			} else {
-				// on
-				data_pool_set_engine(IC_HMI_ON);
-				(void) set_command_alarm_sound_worker(scp->alarm_sound, ALARM_SOUND_WORKER_PLAY1);
-				telltale_on = 1;
-			}
-			break;
-		}
-	case 0x232 :
-		{
-			if ((can_frame_data->data[0] & 0x40U) == 0) {
-				// off
-				data_pool_set_srs_airbag(IC_HMI_OFF);
-			} else {
-				// on
-				data_pool_set_srs_airbag(IC_HMI_ON);
-				(void) set_command_alarm_sound_worker(scp->alarm_sound, ALARM_SOUND_WORKER_PLAY2);
-				telltale_on = 1;
-			}
-			break;
-		}
-	default:
-		break;
-	}
-
-	if (telltale_on == 0) {
-		(void) set_command_alarm_sound_worker(scp->alarm_sound, ALARM_SOUND_WORKER_STOP);
-	}
-
-	fprintf(stderr, "0x%03X [%d] \n", can_frame_data->can_id, can_frame_data->can_dlc);
-
-	return;
-*/
 }
-
 
 static int socketcan_receive(int fd, socketcan_client_handle_sdevent scp)
 {

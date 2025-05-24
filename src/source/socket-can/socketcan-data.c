@@ -37,10 +37,10 @@ static int can_handler_985(uint32_t can_id, uint8_t *payload, size_t data_length
 	// SG_ PT_EngineSpeed : 23|16@0+ (0.25,0) [0|0] "rpm" VCAR_SIGNAL
 	{
 		uint32_t tmp = 0;
-		tmp = (((uint32_t)payload[2] & 0xffU) * 256U) + ((uint32_t)payload[1] & 0xffU);
+		tmp = (((uint32_t)payload[2] & 0xffU) * 256U) + ((uint32_t)payload[3] & 0xffU);
 
 		// 1 / (2^2) = 0.25
-		uint32_t val = (tmp * 100U) / 4U;
+		uint32_t val = tmp / 4U;
 		if (tmp >= 0x4E20U) {
 			val = 0x4E20U;
 		}
@@ -62,7 +62,7 @@ static int can_handler_180(uint32_t can_id, uint8_t *payload, size_t data_length
 	//VAL_ 180 Gear 7 "GEAR_SNA" 5 "GEAR_B" 4 "GEAR_D" 3 "GEAR_N" 2 "GEAR_R" 1 "GEAR_P" 0 "GEAR_INVALID" ;
 	{
 		uint8_t tmp = 0;
-		tmp = (payload[1] >> 4) & 0x07U;
+		tmp = (payload[1] >> 2) & 0x07U;
 
 		IC_HMI_GEAR_AT_VAL gear_val = IC_HMI_AT_UNUSED;
 		if (tmp == 1) {
