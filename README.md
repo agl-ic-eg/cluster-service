@@ -8,6 +8,11 @@ The cluster-service is a common implementation for functional service of cluster
 
 The cluster service is maintained by AGL Instrument Cluster Expert Group.
 
+## Document
+
+### For user
+
+doc/USER_GUIDE.md
 
 ## Reference
 
