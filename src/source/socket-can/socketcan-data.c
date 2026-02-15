@@ -11,7 +11,7 @@ static int can_handler_1001(uint32_t can_id, uint8_t *payload, size_t data_lengt
 
 		// 1 / (2^6) = 0.015625
 		uint32_t val = (tmp * 100U) / 64U;
-		if (tmp >= 0x7530U) {
+		if (val >= 0x7530U) {
 			val = 0x7530U;
 		}
 
@@ -41,7 +41,7 @@ static int can_handler_985(uint32_t can_id, uint8_t *payload, size_t data_length
 
 		// 1 / (2^2) = 0.25
 		uint32_t val = tmp / 4U;
-		if (tmp >= 0x4E20U) {
+		if (val >= 0x4E20U) {
 			val = 0x4E20U;
 		}
 
